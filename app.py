@@ -5,22 +5,22 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Balanced Harmony Style) ---
+# --- 1. 設定頁面與 CSS (Muji White & Gold Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
 COLORS = {
     'bg_main': '#F9F8F6',       # 背景: 極淺暖灰
-    'surface': '#FFFFFF',       # 純白卡片
+    'surface': '#FFFFFF',       # 純白
     'text_primary': '#5B5551',  # 文字: 深暖棕
     'text_secondary': '#9C8E7E',# 文字: 淺灰褐
     
     'accent_warm': '#C7B299',   # 燕麥色
-    'accent_deep': '#8C8376',   # 深卡其 (Note 標題)
+    'accent_deep': '#8C8376',   # 深卡其
     
     # 導覽列與互動色
-    'linen_mist': '#FAF0E6',    # 亞麻色 (懸停 Hover / 裝飾背景) - 取代原本的霧玫瑰
-    'warm_gold': '#DEB887',     # 暖金沙 (Active / 重點)
+    'linen_mist': '#FAF0E6',    # 亞麻色 (Hover)
+    'warm_gold': '#DEB887',     # 暖金沙 (Active Border / Highlights)
     'nav_bg_inactive': '#F0EFEA', # 導覽列未選中背景
     
     'line_light': '#E0DCD8',    # 線條顏色
@@ -46,13 +46,13 @@ st.markdown(f"""
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* --- 導覽列專屬樣式 (7等份和諧色塊) --- */
+    /* --- 導覽列樣式 (白色主題) --- */
     div[data-testid="column"] button {{
         background-color: {COLORS['nav_bg_inactive']} !important;
         border: none !important;
         color: {COLORS['text_secondary']} !important;
         font-weight: 500 !important;
-        border-radius: 12px !important; /* 統一圓角 */
+        border-radius: 12px !important;
         height: 48px !important;
         width: 100% !important;
         padding: 0 !important;
@@ -61,19 +61,19 @@ st.markdown(f"""
         align-items: center;
         justify-content: center;
     }}
-    /* 懸停狀態 (Hover) - 改為亞麻色 */
+    /* 懸停 (Hover) */
     div[data-testid="column"] button:hover {{
         background-color: {COLORS['linen_mist']} !important;
         color: {COLORS['text_primary']} !important;
-        opacity: 1; /* 移除半透明，讓顏色更實 */
         transform: translateY(-2px);
     }}
-    /* 選中狀態 (Active) - 暖金沙色 */
+    /* 選中 (Active) - 改回白色背景 */
     div[data-testid="column"] button[kind="primary"] {{
-        background-color: {COLORS['warm_gold']} !important;
-        color: #FFFFFF !important;
+        background-color: #FFFFFF !important; /* 改回白色 */
+        color: {COLORS['text_primary']} !important;
+        border: 1px solid {COLORS['warm_gold']} !important; /* 金色邊框 */
         font-weight: 700 !important;
-        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.4) !important;
+        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15) !important;
     }}
 
     /* --- 卡片與內容樣式 --- */
@@ -87,27 +87,23 @@ st.markdown(f"""
         margin-bottom: 1.2rem;
     }}
 
-    /* 住宿卡片容器邊框 */
+    /* 住宿卡片容器 */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         border-color: {COLORS['line_light']} !important;
         border-radius: 16px !important;
         background-color: {COLORS['surface']};
     }}
     
-    /* 一般功能按鈕 (Booking Info/Ticket 等) */
-    .element-container .stButton button {{
+    /* 一般按鈕 */
+    .stButton button {{
         height: auto !important;
-    }}
-    
-    /* 針對一般按鈕的樣式覆蓋 */
-    div[data-testid="stVerticalBlock"] > div > div > div > div > .stButton button {{
+        padding: 6px 20px !important;
         background-color: transparent;
         border: 1px solid {COLORS['line_light']} !important;
         color: {COLORS['text_secondary']};
         border-radius: 24px;
-        padding: 6px 20px;
     }}
-    div[data-testid="stVerticalBlock"] > div > div > div > div > .stButton button:hover {{
+    .stButton button:hover {{
         background-color: #FFFFFF !important;
         color: {COLORS['warm_gold']} !important;
         border-color: {COLORS['warm_gold']} !important;
@@ -194,7 +190,7 @@ st.markdown(f"""
     .pass-notch-left {{ left: -10px; border-right: none; }}
     .pass-notch-right {{ right: -10px; border-left: none; }}
 
-    /* 時間軸 - 金色點綴 */
+    /* 時間軸 */
     .timeline-point {{
         width: 9px;
         height: 9px;
@@ -219,6 +215,17 @@ st.markdown(f"""
 if 'view' not in st.session_state: st.session_state.view = 'overview'
 if 'tickets' not in st.session_state: st.session_state.tickets = {}
 if 'packing' not in st.session_state: st.session_state.packing = {}
+
+# 原始資料
+DEFAULT_PACKING = [
+    { "category": "Documents", "items": ["護照", "VJW QR", "機票截圖"] },
+    { "category": "Clothing", "items": ["發熱衣", "防風外套", "毛帽"] },
+    { "category": "Electronics", "items": ["網卡", "行動電源", "充電線"] }
+]
+
+# 初始化行李清單狀態 (支援動態新增)
+if 'packing_list' not in st.session_state:
+    st.session_state.packing_list = DEFAULT_PACKING + [{"category": "Personal", "items": []}]
 
 APP_DATA = {
   "flight": { 
@@ -276,11 +283,6 @@ APP_DATA = {
           { "time": "18:40", "text": "TR893 起飛", "type": "transport", "desc": "返台", "guideText": "酷航櫃台通常在起飛前3小時開櫃，建議提早去排隊托運，因為新千歲國際線免稅店排隊結帳人潮通常非常驚人。", "mapUrl": "https://maps.app.goo.gl/NewChitoseIntl" }
       ]
     }
-  ],
-  "packing": [
-    { "category": "Documents", "items": ["護照", "VJW QR", "機票截圖"] },
-    { "category": "Clothing", "items": ["發熱衣", "防風外套", "毛帽"] },
-    { "category": "Electronics", "items": ["網卡", "行動電源", "充電線"] }
   ]
 }
 
@@ -374,7 +376,31 @@ def ticket_modal(ticket_key, title):
             st.session_state.is_editing = False
             st.rerun()
 
-# --- 5. 頁面視圖函式 ---
+# --- 5. 頂部導覽列 ---
+st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+
+# 使用 7 個等寬欄位
+nav_cols = st.columns(7)
+nav_items = [
+    ("🏠", "overview"), 
+    ("08", 0), 
+    ("09", 1), 
+    ("10", 2), 
+    ("11", 3), 
+    ("12", 4), 
+    ("🎒", "packing")
+]
+
+for i, (label, view_name) in enumerate(nav_items):
+    is_active = st.session_state.view == view_name
+    # 觸發 primary 樣式 (白色背景 + 金邊)
+    if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
+        st.session_state.view = view_name
+        st.rerun()
+
+st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+
+# --- 6. 頁面視圖 ---
 
 def view_overview():
     # Header
@@ -579,9 +605,9 @@ def view_day(day_id):
                 """, unsafe_allow_html=True)
 
             if act['type'] == 'food' and 'menu' in act:
-                # 更新為 linen_mist 亞麻色背景
+                # 這裡將背景色改為白色 #FFFFFF
                 st.markdown(f"""
-                <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: {COLORS['linen_mist']}; border: 1px solid {COLORS['linen_mist']};">
+                <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: #FFFFFF; border: 1px solid {COLORS['line_light']};">
                     <div style="font-size:0.75rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
                     <ul style="margin: 0; padding-left: 20px; color: {COLORS['text_primary']}; font-size: 0.95rem;">
                         {''.join([f'<li style="margin-bottom:4px;">{m}</li>' for m in act['menu']])}
@@ -614,7 +640,8 @@ def view_day(day_id):
 def view_packing():
     st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
     
-    total = sum(len(c['items']) for c in APP_DATA['packing'])
+    total = sum(len(item) for cat in st.session_state.packing_list for item in cat['items']) # 修正計數邏輯
+    # 計算已勾選的數量 (這需要更複雜的遍歷，這裡簡化)
     checked = sum(1 for k, v in st.session_state.packing.items() if v)
     
     st.markdown(f"""<style>
@@ -624,7 +651,8 @@ def view_packing():
     
     st.write("")
     
-    for cat in APP_DATA['packing']:
+    # 顯示現有清單
+    for cat in st.session_state.packing_list:
         with st.container():
             st.markdown(f"""
             <div style="padding: 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-radius: 12px; margin-bottom: 1rem;">
@@ -635,30 +663,25 @@ def view_packing():
                 val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
                 st.session_state.packing[key] = val
             st.markdown("</div>", unsafe_allow_html=True)
+            
+    # 新增物品區塊
+    st.markdown("---")
+    st.markdown("##### ➕ Add New Item")
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        new_item = st.text_input("Item Name", label_visibility="collapsed", placeholder="輸入物品名稱...")
+    with col2:
+        if st.button("Add", use_container_width=True):
+            if new_item:
+                # 找到 "Personal" 分類並加入，如果沒有就建立
+                personal_cat = next((c for c in st.session_state.packing_list if c['category'] == 'Personal'), None)
+                if personal_cat:
+                    personal_cat['items'].append(new_item)
+                else:
+                    st.session_state.packing_list.append({"category": "Personal", "items": [new_item]})
+                st.rerun()
 
-# --- 6. 導覽列與主程式路由 (Bottom) ---
-st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
-
-nav_cols = st.columns(7)
-nav_items = [
-    ("🏠", "overview"), 
-    ("08", 0), 
-    ("09", 1), 
-    ("10", 2), 
-    ("11", 3), 
-    ("12", 4), 
-    ("🎒", "packing")
-]
-
-for i, (label, view_name) in enumerate(nav_items):
-    is_active = st.session_state.view == view_name
-    if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
-        st.session_state.view = view_name
-        st.rerun()
-
-st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-
-# 主畫面路由
+# --- 7. 渲染主畫面 ---
 if st.session_state.view == 'overview': view_overview()
 elif st.session_state.view == 'packing': view_packing()
 elif isinstance(st.session_state.view, int): view_day(st.session_state.view)
