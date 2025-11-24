@@ -16,12 +16,13 @@ COLORS = {
     'text_main': '#333333',# 墨黑
     'text_sub': '#7F7268', # 亞麻灰
     'accent': '#8E8071',   # 栗色/亞麻色
-    'red': '#B94047'       # 傳統紅
+    'red': '#B94047'       # 傳統紅 (警示用)
 }
 
 # 注入 CSS
 st.markdown(f"""
     <style>
+    /* 引入 Google Fonts 作為備案，但主要強制使用微軟正黑體 */
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;600;700&family=Shippori+Mincho:wght@400;500;700&display=swap');
 
     /* 全局設定 */
@@ -29,11 +30,12 @@ st.markdown(f"""
         background-color: {COLORS['bg']};
         background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238e8071' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         
-        /* 全局字體改為微軟正黑體 */
+        /* 修改處：全局字體改為微軟正黑體 */
         font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
         color: {COLORS['text_main']};
     }}
     
+    /* 標題強制微軟正黑體 */
     h1, h2, h3, .serif-font {{
         font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif !important;
     }}
@@ -56,7 +58,7 @@ st.markdown(f"""
         background-color: {COLORS['surface']};
         border: 1px solid {COLORS['line']};
         color: {COLORS['text_sub']};
-        border-radius: 12px; /* 稍微圓角一點，配合新的整齊設計 */
+        border-radius: 12px;
         font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
         font-weight: 500;
         transition: all 0.2s;
@@ -333,7 +335,7 @@ def view_overview():
     
     st.write("")
     
-    # VJW Card
+    # VJW Card (明亮棕色)
     vjw_url = "https://vjw-lp.digital.go.jp/en/"
     st.markdown(f"""
     <style>
@@ -409,32 +411,32 @@ def view_overview():
 def view_day(day_id):
     day = APP_DATA['days'][day_id]
     
-    # --- 1. 即時天氣預報顯示 ---
+    # --- 即時天氣預報 (修正 HTML 縮排問題) ---
     lat = day['coords']['lat']
     lon = day['coords']['lon']
     temp, w_text = get_weather(lat, lon) 
 
-    # 確保天氣圖示根據天氣狀況變化 (簡單版)
     weather_icon = "🌥️"
     if "晴" in w_text: weather_icon = "☀️"
     elif "雨" in w_text: weather_icon = "🌧️"
     elif "雪" in w_text: weather_icon = "❄️"
 
-    # 使用單純的 HTML 結構，移除註解避免解析錯誤
-    st.markdown(f"""
-    <div style="text-align:center; margin-bottom: 1.5rem;">
-        <h2 style="font-size: 2.5rem; margin:0; color:{COLORS['text_main']}">{day['date'].split(' ')[0]}</h2>
-        <div style="color:{COLORS['text_sub']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 15px;">{day['location']}</div>
-        
-        <div style="display: inline-flex; align-items: center; gap: 12px; background: #FFFFFF; padding: 10px 20px; border-radius: 30px; border: 1px solid {COLORS['line']}; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
-             <span style="font-size: 1.8rem; line-height: 1;">{weather_icon}</span>
-             <div style="text-align: left; line-height: 1.1;">
-                 <div style="font-size: 1.2rem; font-weight: bold; color: {COLORS['text_main']}">{temp}° {w_text}</div>
-                 <div style="font-size: 0.6rem; color: #AAA; font-weight: 700; letter-spacing: 1px;">REAL-TIME</div>
-             </div>
-        </div>
+    # 使用獨立變數並靠左對齊字串
+    weather_html = f"""
+<div style="text-align:center; margin-bottom: 1.5rem;">
+    <h2 style="font-size: 2.5rem; margin:0; color:{COLORS['text_main']}">{day['date'].split(' ')[0]}</h2>
+    <div style="color:{COLORS['text_sub']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 15px;">{day['location']}</div>
+    <div style="display: inline-flex; align-items: center; gap: 12px; background: #FFFFFF; padding: 10px 20px; border-radius: 30px; border: 1px solid {COLORS['line']}; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+            <span style="font-size: 1.8rem; line-height: 1;">{weather_icon}</span>
+            <div style="text-align: left; line-height: 1.1;">
+                <div style="font-size: 1.2rem; font-weight: bold; color: {COLORS['text_main']}">{temp}° {w_text}</div>
+                <div style="font-size: 0.6rem; color: #AAA; font-weight: 700; letter-spacing: 1px;">REAL-TIME</div>
+            </div>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+"""
+    st.markdown(weather_html, unsafe_allow_html=True)
+    # ---------------------------------------
 
     # Hotel
     st.markdown(f"""
@@ -458,7 +460,6 @@ def view_day(day_id):
         """, unsafe_allow_html=True)
         
         with st.expander(f"詳情 / {act['desc']}"):
-            # Note Area
             if 'guideText' in act:
                 st.markdown(f"""
                 <div style="background:{COLORS['bg']}; border:1px solid {COLORS['line']}; padding:12px; border-radius:8px; margin-bottom:15px;">
@@ -473,7 +474,7 @@ def view_day(day_id):
             
             st.write("") # Spacer
 
-            # --- 按鈕區 (動態對齊邏輯) ---
+            # --- 按鈕區 (動態對齊) ---
             actions = []
             if 'mapUrl' in act:
                 actions.append("map")
@@ -485,20 +486,17 @@ def view_day(day_id):
                 cols = st.columns(len(actions))
                 col_idx = 0
                 
-                # Render Map
                 if "map" in actions:
                     with cols[col_idx]:
                         st.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
                     col_idx += 1
                 
-                # Render Ticket W
                 if "ticket_w" in actions:
                     with cols[col_idx]:
                         if st.button("🎫 Ticket (W)", key=f"t_{day_id}_{i}_w", use_container_width=True):
                             ticket_modal(f"t_{day_id}_{i}_w", f"Ticket (W) - {act['text']}")
                     col_idx += 1
                 
-                # Render Ticket C
                 if "ticket_c" in actions:
                     with cols[col_idx]:
                         if st.button("🎫 Ticket (C)", key=f"t_{day_id}_{i}_c", use_container_width=True):
@@ -542,4 +540,3 @@ for i, (label, view_name) in enumerate(nav_items):
 if st.session_state.view == 'overview': view_overview()
 elif st.session_state.view == 'packing': view_packing()
 elif isinstance(st.session_state.view, int): view_day(st.session_state.view)
-
