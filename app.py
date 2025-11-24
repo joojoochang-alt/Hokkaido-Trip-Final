@@ -5,7 +5,7 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji White & Gold Style) ---
+# --- 1. 設定頁面與 CSS (Muji Mobile Optimized Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
@@ -14,15 +14,11 @@ COLORS = {
     'surface': '#FFFFFF',       # 純白
     'text_primary': '#5B5551',  # 文字: 深暖棕
     'text_secondary': '#9C8E7E',# 文字: 淺灰褐
-    
     'accent_warm': '#C7B299',   # 燕麥色
     'accent_deep': '#8C8376',   # 深卡其
-    
-    # 導覽列與互動色
-    'linen_mist': '#FAF0E6',    # 亞麻色 (Hover)
-    'warm_gold': '#DEB887',     # 暖金沙 (Active Border / Highlights)
-    'nav_bg_inactive': '#F0EFEA', # 導覽列未選中背景
-    
+    'linen_mist': '#FAF0E6',    # 亞麻色 (Hover/BG)
+    'warm_gold': '#DEB887',     # 暖金沙 (Active)
+    'nav_bg_inactive': '#F0EFEA', # 導覽列未選中
     'line_light': '#E0DCD8',    # 線條顏色
     'alert_red': '#B94047',     # 警示紅
 }
@@ -46,7 +42,11 @@ st.markdown(f"""
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* --- 導覽列樣式 (白色主題) --- */
+    /* -----------------------------------------
+       導覽列樣式 (包含手機版橫向強制修正)
+       ----------------------------------------- */
+    
+    /* 電腦版預設樣式 */
     div[data-testid="column"] button {{
         background-color: {COLORS['nav_bg_inactive']} !important;
         border: none !important;
@@ -56,27 +56,52 @@ st.markdown(f"""
         height: 48px !important;
         width: 100% !important;
         padding: 0 !important;
-        transition: all 0.3s ease !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        transition: all 0.2s ease !important;
     }}
+
+    /* 手機版強制橫向排列 (Mobile Layout Fix) */
+    @media (max-width: 640px) {{
+        /* 針對導覽列所在的容器 (透過觀察結構，通常是第一組多欄位) */
+        /* 這裡強制所有 columns 在手機上不換行，並啟用水平捲動 */
+        div[data-testid="column"] {{
+            min-width: 0px !important; /* 允許縮到最小 */
+            flex: 1 !important;        /* 平均分配空間 */
+            padding: 0 2px !important; /* 減少欄位間距 */
+        }}
+        
+        /* 導覽列按鈕縮小 */
+        div[data-testid="column"] button {{
+            height: 40px !important;
+            font-size: 0.8rem !important;
+            padding: 0 !important;
+            border-radius: 8px !important;
+        }}
+        
+        /* 讓圖示 (Home/List) 在手機上稍微大一點點以利點擊 */
+        div[data-testid="column"] button:contains("🏠"), 
+        div[data-testid="column"] button:contains("🎒") {{
+            font-size: 1.2rem !important;
+        }}
+    }}
+
     /* 懸停 (Hover) */
     div[data-testid="column"] button:hover {{
         background-color: {COLORS['linen_mist']} !important;
         color: {COLORS['text_primary']} !important;
-        transform: translateY(-2px);
+        transform: translateY(-1px);
     }}
-    /* 選中 (Active) - 改回白色背景 */
+    /* 選中 (Active) - 白色背景 + 金邊 */
     div[data-testid="column"] button[kind="primary"] {{
-        background-color: #FFFFFF !important; /* 改回白色 */
+        background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
-        border: 1px solid {COLORS['warm_gold']} !important; /* 金色邊框 */
+        border: 1px solid {COLORS['warm_gold']} !important;
         font-weight: 700 !important;
-        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15) !important;
+        box-shadow: 0 2px 8px rgba(222, 184, 135, 0.2) !important;
     }}
 
-    /* --- 卡片與內容樣式 --- */
+    /* -----------------------------------------
+       通用元件樣式
+       ----------------------------------------- */
 
     /* 簡約日式卡片 */
     .minimal-card {{
@@ -94,22 +119,43 @@ st.markdown(f"""
         background-color: {COLORS['surface']};
     }}
     
-    /* 一般按鈕 */
+    /* 一般按鈕 (Google Map, Ticket 等) - 預設純白 */
     .stButton button {{
         height: auto !important;
-        padding: 6px 20px !important;
-        background-color: transparent;
+        padding: 8px 20px !important;
+        background-color: #FFFFFF !important; /* 改成純白背景 */
         border: 1px solid {COLORS['line_light']} !important;
-        color: {COLORS['text_secondary']};
+        color: {COLORS['text_primary']} !important; /* 深色文字 */
         border-radius: 24px;
+        font-weight: 500 !important;
     }}
     .stButton button:hover {{
-        background-color: #FFFFFF !important;
-        color: {COLORS['warm_gold']} !important;
         border-color: {COLORS['warm_gold']} !important;
+        color: {COLORS['warm_gold']} !important;
         box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15);
     }}
 
+    /* Expander (查看詳情) 樣式重寫 - 淺色化 */
+    div[data-testid="stExpander"] {{
+        background-color: #FFFFFF;
+        border: 1px solid {COLORS['line_light']};
+        border-radius: 12px;
+        box-shadow: none;
+        margin-top: 10px;
+    }}
+    div[data-testid="stExpander"] summary {{
+        color: {COLORS['text_primary']} !important;
+        font-weight: 500;
+        padding-left: 10px;
+    }}
+    div[data-testid="stExpander"] summary:hover {{
+        color: {COLORS['warm_gold']} !important;
+    }}
+    /* 移除 Expander 內部的預設邊框 */
+    div[data-testid="stExpander"] > div:first-child {{
+        border-bottom: none !important;
+    }}
+    
     /* 天氣與匯率區塊 */
     .info-grid-minimal {{
         display: grid;
@@ -140,16 +186,6 @@ st.markdown(f"""
         color: {COLORS['text_primary']};
         line-height: 1.2;
         margin-top: 8px;
-    }}
-
-    /* Expander */
-    div[data-testid="stExpander"] {{
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
-    }}
-    div[data-testid="stExpander"] summary {{
-        color: {COLORS['text_primary']};
     }}
     
     /* Ticket Style */
@@ -223,7 +259,7 @@ DEFAULT_PACKING = [
     { "category": "Electronics", "items": ["網卡", "行動電源", "充電線"] }
 ]
 
-# 初始化行李清單狀態 (支援動態新增)
+# 初始化行李清單狀態
 if 'packing_list' not in st.session_state:
     st.session_state.packing_list = DEFAULT_PACKING + [{"category": "Personal", "items": []}]
 
@@ -283,6 +319,11 @@ APP_DATA = {
           { "time": "18:40", "text": "TR893 起飛", "type": "transport", "desc": "返台", "guideText": "酷航櫃台通常在起飛前3小時開櫃，建議提早去排隊托運，因為新千歲國際線免稅店排隊結帳人潮通常非常驚人。", "mapUrl": "https://maps.app.goo.gl/NewChitoseIntl" }
       ]
     }
+  ],
+  "packing": [
+    { "category": "Documents", "items": ["護照", "VJW QR", "機票截圖"] },
+    { "category": "Clothing", "items": ["發熱衣", "防風外套", "毛帽"] },
+    { "category": "Electronics", "items": ["網卡", "行動電源", "充電線"] }
   ]
 }
 
@@ -376,7 +417,7 @@ def ticket_modal(ticket_key, title):
             st.session_state.is_editing = False
             st.rerun()
 
-# --- 5. 頂部導覽列 ---
+# --- 5. 頂部導覽列 (7等份) ---
 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
 # 使用 7 個等寬欄位
@@ -640,8 +681,7 @@ def view_day(day_id):
 def view_packing():
     st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
     
-    total = sum(len(item) for cat in st.session_state.packing_list for item in cat['items']) # 修正計數邏輯
-    # 計算已勾選的數量 (這需要更複雜的遍歷，這裡簡化)
+    total = sum(len(item) for cat in st.session_state.packing_list for item in cat['items']) 
     checked = sum(1 for k, v in st.session_state.packing.items() if v)
     
     st.markdown(f"""<style>
