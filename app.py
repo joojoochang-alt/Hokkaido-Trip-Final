@@ -5,7 +5,7 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Mobile Optimized Style) ---
+# --- 1. 設定頁面與 CSS (Muji Pure Light Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
@@ -16,7 +16,7 @@ COLORS = {
     'text_secondary': '#9C8E7E',# 文字: 淺灰褐
     'accent_warm': '#C7B299',   # 燕麥色
     'accent_deep': '#8C8376',   # 深卡其
-    'linen_mist': '#FAF0E6',    # 亞麻色 (Hover/BG)
+    'linen_mist': '#FAF0E6',    # 亞麻色 (Hover)
     'warm_gold': '#DEB887',     # 暖金沙 (Active)
     'nav_bg_inactive': '#F0EFEA', # 導覽列未選中
     'line_light': '#E0DCD8',    # 線條顏色
@@ -42,66 +42,62 @@ st.markdown(f"""
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* -----------------------------------------
-       導覽列樣式 (包含手機版橫向強制修正)
-       ----------------------------------------- */
+    /* --- 導覽列樣式 (膠囊復刻版) --- */
+    /* 針對 st.container(border=True) 進行魔改，使其變成膠囊 */
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        border-radius: 50px !important;
+        border: 1px solid {COLORS['line_light']} !important;
+        background-color: #FDFBF7 !important; /* 膠囊背景 */
+        /* padding: 8px 20px !important;  注意：這裡不能寫死 padding，否則會影響住宿卡片 */
+        margin: 0 auto 20px auto !important; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }}
+
+    /* 我們需要區分「導覽列膠囊」和「住宿卡片」
+       這裡使用一個 trick: 導覽列的 buttons 是圓形的，住宿卡片的按鈕是長圓角 */
     
-    /* 電腦版預設樣式 */
+    /* 導覽列內的按鈕 (日期) */
     div[data-testid="column"] button {{
-        background-color: {COLORS['nav_bg_inactive']} !important;
+        background-color: transparent !important;
         border: none !important;
         color: {COLORS['text_secondary']} !important;
+        font-family: 'Shippori Mincho', serif !important;
         font-weight: 500 !important;
-        border-radius: 12px !important;
-        height: 48px !important;
-        width: 100% !important;
+        font-size: 1rem !important;
         padding: 0 !important;
-        transition: all 0.2s ease !important;
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important; /* 圓形 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: none !important;
     }}
-
-    /* 手機版強制橫向排列 (Mobile Layout Fix) */
-    @media (max-width: 640px) {{
-        /* 針對導覽列所在的容器 (透過觀察結構，通常是第一組多欄位) */
-        /* 這裡強制所有 columns 在手機上不換行，並啟用水平捲動 */
-        div[data-testid="column"] {{
-            min-width: 0px !important; /* 允許縮到最小 */
-            flex: 1 !important;        /* 平均分配空間 */
-            padding: 0 2px !important; /* 減少欄位間距 */
-        }}
-        
-        /* 導覽列按鈕縮小 */
-        div[data-testid="column"] button {{
-            height: 40px !important;
-            font-size: 0.8rem !important;
-            padding: 0 !important;
-            border-radius: 8px !important;
-        }}
-        
-        /* 讓圖示 (Home/List) 在手機上稍微大一點點以利點擊 */
-        div[data-testid="column"] button:contains("🏠"), 
-        div[data-testid="column"] button:contains("🎒") {{
-            font-size: 1.2rem !important;
-        }}
-    }}
-
-    /* 懸停 (Hover) */
+    
+    /* 導覽列懸停 (Hover) */
     div[data-testid="column"] button:hover {{
         background-color: {COLORS['linen_mist']} !important;
         color: {COLORS['text_primary']} !important;
-        transform: translateY(-1px);
     }}
-    /* 選中 (Active) - 白色背景 + 金邊 */
+    
+    /* 導覽列選中 (Active) - 深棕色背景 + 白字 (還原截圖) */
     div[data-testid="column"] button[kind="primary"] {{
-        background-color: #FFFFFF !important;
-        color: {COLORS['text_primary']} !important;
-        border: 1px solid {COLORS['warm_gold']} !important;
-        font-weight: 700 !important;
-        box-shadow: 0 2px 8px rgba(222, 184, 135, 0.2) !important;
+        background-color: #6B6359 !important; /* 深棕色 */
+        color: #FFFFFF !important; /* 白字 */
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(107, 99, 89, 0.3) !important;
     }}
 
-    /* -----------------------------------------
-       通用元件樣式
-       ----------------------------------------- */
+    /* 手機版強制橫向排列修正 */
+    @media (max-width: 640px) {{
+        div[data-testid="column"] {{
+            min-width: 0px !important;
+            flex: 1 !important;
+            padding: 0 2px !important;
+        }}
+    }}
+
+    /* --- 通用元件樣式 --- */
 
     /* 簡約日式卡片 */
     .minimal-card {{
@@ -112,48 +108,47 @@ st.markdown(f"""
         margin-bottom: 1.2rem;
     }}
 
-    /* 住宿卡片容器 */
-    div[data-testid="stVerticalBlockBorderWrapper"] {{
-        border-color: {COLORS['line_light']} !important;
-        border-radius: 16px !important;
-        background-color: {COLORS['surface']};
-    }}
-    
-    /* 一般按鈕 (Google Map, Ticket 等) - 預設純白 */
+    /* 一般功能按鈕 (長圓角) - 避免被上面的導覽列樣式覆蓋 */
     .stButton button {{
+        width: auto !important; /* 恢復自動寬度 */
         height: auto !important;
-        padding: 8px 20px !important;
-        background-color: #FFFFFF !important; /* 改成純白背景 */
+        padding: 6px 20px !important;
+        border-radius: 24px !important; /* 長圓角 */
+        background-color: #FFFFFF !important;
         border: 1px solid {COLORS['line_light']} !important;
-        color: {COLORS['text_primary']} !important; /* 深色文字 */
-        border-radius: 24px;
-        font-weight: 500 !important;
+        color: {COLORS['text_secondary']} !important;
     }}
     .stButton button:hover {{
         border-color: {COLORS['warm_gold']} !important;
         color: {COLORS['warm_gold']} !important;
-        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15);
+        background-color: #FFFFFF !important;
+        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15) !important;
     }}
 
-    /* Expander (查看詳情) 樣式重寫 - 淺色化 */
+    /* Expander (查看詳情) - 強制去黑化 */
     div[data-testid="stExpander"] {{
-        background-color: #FFFFFF;
-        border: 1px solid {COLORS['line_light']};
+        background-color: #FFFFFF !important;
+        border: 1px solid {COLORS['line_light']} !important;
         border-radius: 12px;
         box-shadow: none;
-        margin-top: 10px;
+        color: {COLORS['text_primary']} !important;
     }}
     div[data-testid="stExpander"] summary {{
         color: {COLORS['text_primary']} !important;
-        font-weight: 500;
-        padding-left: 10px;
+        background-color: transparent !important; /* 確保標題列背景透明 */
     }}
     div[data-testid="stExpander"] summary:hover {{
         color: {COLORS['warm_gold']} !important;
     }}
-    /* 移除 Expander 內部的預設邊框 */
-    div[data-testid="stExpander"] > div:first-child {{
-        border-bottom: none !important;
+    div[data-testid="stExpander"] svg {{
+        color: {COLORS['text_secondary']} !important; /* 箭頭顏色 */
+    }}
+    
+    /* Input 欄位去黑化 */
+    div[data-testid="stTextInput"] input {{
+        background-color: #FFFFFF !important;
+        color: {COLORS['text_primary']} !important;
+        border-color: {COLORS['line_light']} !important;
     }}
     
     /* 天氣與匯率區塊 */
@@ -244,6 +239,19 @@ st.markdown(f"""
         width: 1px;
         background-color: {COLORS['line_light']};
     }}
+    
+    /* 刪除按鈕樣式 (小小的紅色垃圾桶) */
+    .delete-btn button {{
+        border: none !important;
+        color: #E57373 !important; /* 淺紅 */
+        padding: 0px 8px !important;
+        font-size: 0.8rem !important;
+    }}
+    .delete-btn button:hover {{
+        background-color: #FFEBEE !important;
+        color: #D32F2F !important;
+        box-shadow: none !important;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -252,16 +260,16 @@ if 'view' not in st.session_state: st.session_state.view = 'overview'
 if 'tickets' not in st.session_state: st.session_state.tickets = {}
 if 'packing' not in st.session_state: st.session_state.packing = {}
 
-# 原始資料
+# 預設清單
 DEFAULT_PACKING = [
     { "category": "Documents", "items": ["護照", "VJW QR", "機票截圖"] },
     { "category": "Clothing", "items": ["發熱衣", "防風外套", "毛帽"] },
     { "category": "Electronics", "items": ["網卡", "行動電源", "充電線"] }
 ]
 
-# 初始化行李清單狀態
+# 初始化行李清單狀態 (如果沒有就用預設值)
 if 'packing_list' not in st.session_state:
-    st.session_state.packing_list = DEFAULT_PACKING + [{"category": "Personal", "items": []}]
+    st.session_state.packing_list = DEFAULT_PACKING
 
 APP_DATA = {
   "flight": { 
@@ -319,11 +327,6 @@ APP_DATA = {
           { "time": "18:40", "text": "TR893 起飛", "type": "transport", "desc": "返台", "guideText": "酷航櫃台通常在起飛前3小時開櫃，建議提早去排隊托運，因為新千歲國際線免稅店排隊結帳人潮通常非常驚人。", "mapUrl": "https://maps.app.goo.gl/NewChitoseIntl" }
       ]
     }
-  ],
-  "packing": [
-    { "category": "Documents", "items": ["護照", "VJW QR", "機票截圖"] },
-    { "category": "Clothing", "items": ["發熱衣", "防風外套", "毛帽"] },
-    { "category": "Electronics", "items": ["網卡", "行動電源", "充電線"] }
   ]
 }
 
@@ -417,26 +420,35 @@ def ticket_modal(ticket_key, title):
             st.session_state.is_editing = False
             st.rerun()
 
-# --- 5. 頂部導覽列 (7等份) ---
-st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+# --- 5. 頂部導覽列 (橫向膠囊) ---
+st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
-# 使用 7 個等寬欄位
-nav_cols = st.columns(7)
-nav_items = [
-    ("🏠", "overview"), 
-    ("08", 0), 
-    ("09", 1), 
-    ("10", 2), 
-    ("11", 3), 
-    ("12", 4), 
-    ("🎒", "packing")
-]
+# 佈局：左(Home) - 中(Dates Pill) - 右(List)
+c_home, c_nav, c_list = st.columns([1, 5, 1])
 
-for i, (label, view_name) in enumerate(nav_items):
-    is_active = st.session_state.view == view_name
-    # 觸發 primary 樣式 (白色背景 + 金邊)
-    if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
-        st.session_state.view = view_name
+with c_home:
+    if st.button("🏠", key="nav_home", use_container_width=True):
+        st.session_state.view = 'overview'
+        st.rerun()
+
+with c_nav:
+    # 使用 container(border=True) 製作膠囊外框
+    with st.container(border=True):
+        # 內部欄位
+        d1, d2, d3, d4, d5 = st.columns(5)
+        nav_dates = [("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4)]
+        
+        for idx, (label, view_id) in enumerate(nav_dates):
+            is_active = (st.session_state.view == view_id)
+            # 使用列表解包分配到對應的 column
+            with [d1, d2, d3, d4, d5][idx]:
+                if st.button(label, key=f"nav_d{idx}", type="primary" if is_active else "secondary", use_container_width=True):
+                    st.session_state.view = view_id
+                    st.rerun()
+
+with c_list:
+    if st.button("🎒", key="nav_packing", use_container_width=True):
+        st.session_state.view = 'packing'
         st.rerun()
 
 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
@@ -646,10 +658,9 @@ def view_day(day_id):
                 """, unsafe_allow_html=True)
 
             if act['type'] == 'food' and 'menu' in act:
-                # 這裡將背景色改為白色 #FFFFFF
                 st.markdown(f"""
                 <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: #FFFFFF; border: 1px solid {COLORS['line_light']};">
-                    <div style="font-size:0.75rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
+                    <div style="font-size:0.75rem; font-weight:600; color:{COLORS['accent_warm']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
                     <ul style="margin: 0; padding-left: 20px; color: {COLORS['text_primary']}; font-size: 0.95rem;">
                         {''.join([f'<li style="margin-bottom:4px;">{m}</li>' for m in act['menu']])}
                     </ul>
@@ -681,44 +692,82 @@ def view_day(day_id):
 def view_packing():
     st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
     
-    total = sum(len(item) for cat in st.session_state.packing_list for item in cat['items']) 
-    checked = sum(1 for k, v in st.session_state.packing.items() if v)
+    # 計算總數與已勾選
+    total_items = sum(len(cat['items']) for cat in st.session_state.packing_list)
+    checked_items = sum(1 for k, v in st.session_state.packing.items() if v)
     
+    # 進度條
     st.markdown(f"""<style>
         .stProgress > div > div > div > div {{ background-color: {COLORS['warm_gold']}; }}
     </style>""", unsafe_allow_html=True)
-    st.progress(checked / total if total > 0 else 0)
+    st.progress(checked_items / total_items if total_items > 0 else 0)
     
     st.write("")
     
-    # 顯示現有清單
-    for cat in st.session_state.packing_list:
+    # 顯示清單 (含刪除功能)
+    # 使用複製的列表進行迭代，避免在迭代中修改原始列表導致錯誤
+    for i, cat in enumerate(st.session_state.packing_list[:]):
         with st.container():
-            st.markdown(f"""
-            <div style="padding: 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-radius: 12px; margin-bottom: 1rem;">
-                <h4 style='margin-bottom:1rem; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 8px;'>{cat['category']}</h4>
-            """, unsafe_allow_html=True)
-            for item in cat['items']:
-                key = f"pack_{item}"
-                val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
-                st.session_state.packing[key] = val
+            # 標題區塊 (含刪除分類按鈕)
+            col_title, col_del_cat = st.columns([8, 1])
+            with col_title:
+                st.markdown(f"""
+                <div style="padding: 1.2rem 1.2rem 0.5rem 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-bottom:none; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                    <h4 style='margin:0; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif;'>{cat['category']}</h4>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_del_cat:
+                # 刪除整個分類
+                if st.button("🗑️", key=f"del_cat_{i}", help="Delete Category"):
+                    st.session_state.packing_list.pop(i)
+                    st.rerun()
+
+            # 物品列表區塊
+            st.markdown(f"""<div style="padding: 0 1.2rem 1.2rem 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-top:none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; margin-bottom: 1rem;">""", unsafe_allow_html=True)
+            
+            for j, item in enumerate(cat['items']):
+                c1, c2 = st.columns([8, 1])
+                with c1:
+                    key = f"pack_{item}"
+                    val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
+                    st.session_state.packing[key] = val
+                with c2:
+                    # 刪除個別物品 (使用 class 縮小按鈕)
+                    st.markdown('<div class="delete-btn">', unsafe_allow_html=True)
+                    if st.button("✕", key=f"del_item_{i}_{j}"):
+                        st.session_state.packing_list[i]['items'].pop(j)
+                        st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+            
             st.markdown("</div>", unsafe_allow_html=True)
             
-    # 新增物品區塊
+    # 新增物品/分類區塊
     st.markdown("---")
     st.markdown("##### ➕ Add New Item")
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        new_item = st.text_input("Item Name", label_visibility="collapsed", placeholder="輸入物品名稱...")
-    with col2:
+    
+    col_cat, col_item, col_add = st.columns([2, 3, 1])
+    with col_cat:
+        # 可以選擇現有分類或輸入新分類
+        existing_cats = [c['category'] for c in st.session_state.packing_list]
+        new_cat_input = st.text_input("Category", placeholder="分類 (選填)", label_visibility="collapsed")
+        # 簡單邏輯：如果有輸入就用輸入的，沒輸入預設 Personal，若輸入的是舊的就歸類到舊的
+    
+    with col_item:
+        new_item_input = st.text_input("Item Name", placeholder="物品名稱", label_visibility="collapsed")
+        
+    with col_add:
         if st.button("Add", use_container_width=True):
-            if new_item:
-                # 找到 "Personal" 分類並加入，如果沒有就建立
-                personal_cat = next((c for c in st.session_state.packing_list if c['category'] == 'Personal'), None)
-                if personal_cat:
-                    personal_cat['items'].append(new_item)
+            if new_item_input:
+                target_cat_name = new_cat_input if new_cat_input else "Personal"
+                
+                # 尋找是否已存在該分類
+                target_cat = next((c for c in st.session_state.packing_list if c['category'] == target_cat_name), None)
+                
+                if target_cat:
+                    target_cat['items'].append(new_item_input)
                 else:
-                    st.session_state.packing_list.append({"category": "Personal", "items": [new_item]})
+                    st.session_state.packing_list.append({"category": target_cat_name, "items": [new_item_input]})
+                
                 st.rerun()
 
 # --- 7. 渲染主畫面 ---
