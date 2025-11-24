@@ -5,7 +5,7 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Mobile & Light Mode Enforced) ---
+# --- 1. 設定頁面與 CSS (Muji Refined Light Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
@@ -16,22 +16,19 @@ COLORS = {
     'text_secondary': '#9C8E7E',# 文字: 淺灰褐
     'accent_warm': '#C7B299',   # 燕麥色
     'accent_deep': '#8C8376',   # 深卡其
-    'linen_mist': '#FAF0E6',    # 亞麻色
-    'warm_gold': '#DEB887',     # 暖金沙
-    'nav_bg_inactive': '#F0EFEA', 
-    'line_light': '#E0DCD8',
-    'alert_red': '#B94047',
+    'linen_mist': '#FAF0E6',    # 亞麻色 (Hover)
+    'warm_gold': '#DEB887',     # 暖金沙 (Active)
+    'nav_bg_inactive': '#F0EFEA', # 導覽列未選中
+    'line_light': '#E0DCD8',    # 線條顏色
+    'alert_red': '#B94047',     # 警示紅
 }
 
-# 注入 CSS (包含強制亮色與手機橫向修正)
+# 注入 CSS
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Shippori+Mincho:wght@400;500;700&display=swap');
 
-    /* --------------------------------------------------
-       1. 強制亮色主題變數 (Force Light Mode Variables)
-       這會覆蓋手機系統的深色模式設定
-       -------------------------------------------------- */
+    /* 1. 強制亮色主題變數 (覆蓋手機深色模式) */
     :root {{
         --primary-color: {COLORS['warm_gold']};
         --background-color: {COLORS['bg_main']};
@@ -40,7 +37,7 @@ st.markdown(f"""
         --font: "sans-serif";
     }}
 
-    /* 針對 Streamlit 核心元件的強制覆蓋 */
+    /* 全局設定 */
     .stApp {{
         background-color: {COLORS['bg_main']} !important;
         font-family: 'Shippori Mincho', 'Noto Serif TC', serif;
@@ -51,114 +48,76 @@ st.markdown(f"""
         color: {COLORS['text_primary']} !important;
     }}
 
-    /* --------------------------------------------------
-       2. 導覽列 & 手機版橫向排列修正 (Mobile Horizontal Fix)
-       -------------------------------------------------- */
+    #MainMenu, footer, header {{visibility: hidden;}}
+
+    /* -----------------------------------------
+       導覽列樣式 (橫向 + 縮小寬度 + 居中)
+       ----------------------------------------- */
     
-    /* 電腦版預設按鈕樣式 */
+    /* 電腦版預設 */
     div[data-testid="column"] button {{
         background-color: {COLORS['nav_bg_inactive']} !important;
         border: none !important;
         color: {COLORS['text_secondary']} !important;
         font-weight: 500 !important;
-        border-radius: 12px !important;
-        height: 48px !important;
-        width: 100% !important;
+        border-radius: 50% !important; /* 圓形 */
+        width: 42px !important;        /* 固定寬度 */
+        height: 42px !important;       /* 固定高度 */
         padding: 0 !important;
+        margin: 0 auto !important;     /* 自身居中 */
         transition: all 0.2s ease !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }}
 
-    /* ★★★ 手機版關鍵修正 ★★★ */
+    /* 手機版優化 */
     @media (max-width: 640px) {{
-        /* 強制橫向排列容器 */
+        /* 導覽列容器 */
         div[data-testid="stHorizontalBlock"] {{
-            flex-direction: row !important; /* 強制橫向 */
-            flex-wrap: nowrap !important;   /* 禁止換行 */
-            overflow-x: auto !important;    /* 允許左右滑動 (如果真的塞不下) */
-            gap: 4px !important;            /* 縮小間距 */
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            justify-content: center !important; /* 整體居中 */
+            gap: 8px !important; /* 按鈕間距 */
+            padding-bottom: 5px; /* 預留滑動條空間 */
         }}
         
-        /* 強制縮小欄位寬度 */
+        /* 欄位寬度縮小 (不再撐滿) */
         div[data-testid="column"] {{
-            min-width: 0px !important;
-            flex: 1 !important; /* 平均分配寬度 */
+            min-width: auto !important;
             width: auto !important;
+            flex: 0 0 auto !important; /* 不放大也不縮小，依內容大小 */
         }}
 
-        /* 縮小導覽列按鈕以適應手機寬度 */
+        /* 按鈕本體縮小 */
         div[data-testid="column"] button {{
-            height: 40px !important;
+            width: 36px !important;
+            height: 36px !important;
             font-size: 0.85rem !important;
-            padding: 0 !important;
-            border-radius: 8px !important;
-            min-width: 30px !important; /* 確保最小點擊寬度 */
-        }}
-        
-        /* 隱藏首頁和清單按鈕的文字(如果有)，只保留圖示，或稍微放大圖示 */
-        div[data-testid="column"] button p {{
-            font-size: 1.2rem !important;
         }}
     }}
 
-    /* 懸停與選中狀態 */
+    /* 懸停 (Hover) */
     div[data-testid="column"] button:hover {{
         background-color: {COLORS['linen_mist']} !important;
         color: {COLORS['text_primary']} !important;
+        transform: translateY(-1px);
     }}
+    /* 選中 (Active) - 白底金邊 */
     div[data-testid="column"] button[kind="primary"] {{
         background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
         border: 1px solid {COLORS['warm_gold']} !important;
         font-weight: 700 !important;
-        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15) !important;
+        box-shadow: 0 2px 8px rgba(222, 184, 135, 0.25) !important;
     }}
 
-    /* --------------------------------------------------
-       3. 去除黑色反白 (Anti-Dark Mode artifacts)
-       -------------------------------------------------- */
+    /* -----------------------------------------
+       通用元件樣式
+       ----------------------------------------- */
 
-    /* Expander (查看詳情) */
-    div[data-testid="stExpander"] {{
-        background-color: #FFFFFF !important;
-        border: 1px solid {COLORS['line_light']} !important;
-        color: {COLORS['text_primary']} !important;
-        box-shadow: none !important;
-    }}
-    div[data-testid="stExpander"] summary {{
-        background-color: transparent !important; /* 移除標題列背景 */
-        color: {COLORS['text_primary']} !important;
-    }}
-    div[data-testid="stExpander"] summary:hover {{
-        color: {COLORS['warm_gold']} !important;
-    }}
-    /* 箭頭圖示顏色 */
-    div[data-testid="stExpander"] svg {{
-        fill: {COLORS['text_secondary']} !important;
-        color: {COLORS['text_secondary']} !important;
-    }}
-
-    /* 輸入框 (Text Input / File Uploader) */
-    div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {{
-        background-color: #FFFFFF !important;
-        color: {COLORS['text_primary']} !important;
-        border-color: {COLORS['line_light']} !important;
-    }}
-    /* 檔案上傳區塊 */
-    div[data-testid="stFileUploader"] {{
-        background-color: #FFFFFF !important;
-    }}
-    section[data-testid="stFileUploaderDropzone"] {{
-        background-color: #FAFAFA !important;
-        color: {COLORS['text_secondary']} !important;
-    }}
-
-    /* --------------------------------------------------
-       4. 其他元件樣式
-       -------------------------------------------------- */
-
-    #MainMenu, footer, header {{visibility: hidden;}}
-
-    /* 簡約卡片 */
+    /* 簡約日式卡片 */
     .minimal-card {{
         background: {COLORS['surface']};
         border: 1px solid {COLORS['line_light']};
@@ -174,52 +133,83 @@ st.markdown(f"""
         background-color: {COLORS['surface']} !important;
     }}
     
-    /* 一般按鈕 (非導覽列) */
+    /* 一般按鈕 (票券、訂單等) */
     .stButton button {{
         height: auto !important;
-        padding: 6px 20px !important;
-        background-color: #FFFFFF !important; /* 強制白底 */
+        padding: 8px 20px !important;
+        background-color: #FFFFFF !important;
         border: 1px solid {COLORS['line_light']} !important;
-        color: {COLORS['text_secondary']} !important;
+        color: {COLORS['text_primary']} !important;
         border-radius: 24px;
+        font-weight: 500 !important;
     }}
     .stButton button:hover {{
-        background-color: #FFFFFF !important;
-        color: {COLORS['warm_gold']} !important;
         border-color: {COLORS['warm_gold']} !important;
+        color: {COLORS['warm_gold']} !important;
         box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15);
     }}
 
-    /* Info Grid */
-    .info-grid-minimal {{
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
+    /* ★★★ Google Map 連結按鈕強制修正 (去黑底) ★★★ */
+    /* 針對 link_button 且 href 包含 google maps 的元素 */
+    a[href*="google.com/maps"] {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #FFFFFF !important; /* 白底 */
+        color: {COLORS['text_primary']} !important; /* 深字 */
+        border: 1px solid {COLORS['line_light']} !important; /* 淺灰框 */
+        border-radius: 24px !important;
+        padding: 0.5rem 1rem !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+        width: 100%; /* 滿版 */
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
     }}
-    .info-box-minimal {{
-        background: {COLORS['surface']};
-        border-radius: 16px;
-        padding: 1.2rem;
-        border: 1px solid {COLORS['line_light']};
+    a[href*="google.com/maps"]:hover {{
+        border-color: {COLORS['warm_gold']} !important;
+        color: {COLORS['warm_gold']} !important;
+        background-color: #FFFFFF !important;
+        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15) !important;
     }}
-    .info-label-minimal {{
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: {COLORS['text_secondary']};
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 8px;
-        border-bottom: 1px solid {COLORS['line_light']};
-        padding-bottom: 4px;
+    /* 確保 icon 顏色也正確 */
+    a[href*="google.com/maps"]::before {{
+        content: "📍 ";
+        margin-right: 5px;
     }}
-    .info-value-minimal {{
-        font-family: 'Shippori Mincho', serif;
-        font-size: 1.6rem;
-        font-weight: 600;
-        color: {COLORS['text_primary']};
-        line-height: 1.2;
-        margin-top: 8px;
+
+    /* Expander (查看詳情) */
+    div[data-testid="stExpander"] {{
+        background-color: #FFFFFF !important;
+        border: 1px solid {COLORS['line_light']} !important;
+        color: {COLORS['text_primary']} !important;
+        box-shadow: none !important;
+        margin-top: 10px;
+    }}
+    div[data-testid="stExpander"] summary {{
+        background-color: transparent !important;
+        color: {COLORS['text_primary']} !important;
+    }}
+    div[data-testid="stExpander"] summary:hover {{
+        color: {COLORS['warm_gold']} !important;
+    }}
+    div[data-testid="stExpander"] svg {{
+        fill: {COLORS['text_secondary']} !important;
+        color: {COLORS['text_secondary']} !important;
+    }}
+
+    /* 輸入框 */
+    div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {{
+        background-color: #FFFFFF !important;
+        color: {COLORS['text_primary']} !important;
+        border-color: {COLORS['line_light']} !important;
+    }}
+    div[data-testid="stFileUploader"] {{
+        background-color: #FFFFFF !important;
+    }}
+    section[data-testid="stFileUploaderDropzone"] {{
+        background-color: #FAFAFA !important;
+        color: {COLORS['text_secondary']} !important;
     }}
 
     /* Ticket Style */
@@ -279,7 +269,7 @@ st.markdown(f"""
         background-color: {COLORS['line_light']};
     }}
     
-    /* 刪除按鈕樣式 */
+    /* 刪除按鈕 */
     .delete-btn button {{
         border: none !important;
         color: #E57373 !important;
@@ -290,7 +280,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. 資料與狀態管理 ---
+# --- 2. 資料與狀態管理 (連結更新) ---
 if 'view' not in st.session_state: st.session_state.view = 'overview'
 if 'tickets' not in st.session_state: st.session_state.tickets = {}
 if 'packing' not in st.session_state: st.session_state.packing = {}
@@ -305,6 +295,7 @@ DEFAULT_PACKING = [
 if 'packing_list' not in st.session_state:
     st.session_state.packing_list = DEFAULT_PACKING
 
+# ★★★ 更新真實 Google Maps 連結 ★★★
 APP_DATA = {
   "flight": { 
     "outbound": { "code": "TR892", "time": "12:30", "arrival": "17:20" }, 
@@ -319,46 +310,46 @@ APP_DATA = {
       "hotel": "JR-EAST METS", 
       "hotel_note": "札幌站北口", 
       "activities": [
-        { "time": "17:20", "text": "航班抵達 CTS", "type": "transport", "desc": "往 B1 搭 JR。", "guideText": "新千歲機場結構簡單，國際線出來後沿著指示標誌走約10分鐘可達國內線B1搭乘JR。建議先買好Kitaca或在售票機買票。", "mapUrl": "https://goo.gl/maps/NewChitoseAirport" },
-        { "time": "19:45", "text": "飯店 Check-in", "type": "hotel", "desc": "JR-EAST METS", "guideText": "這間飯店最大優勢是「與車站直結」，北口出來步行2分鐘即達。大廳備品豐富，記得拿一些泡澡粉舒緩搭機疲勞。", "mapUrl": "https://maps.app.goo.gl/SapporoStationNorth", "contact": "+81-11-729-0011" },
-        { "time": "20:15", "text": "晚餐：湯咖哩", "type": "food", "desc": "Suage+ / GARAKU", "menu": ["知床雞野菜湯咖哩", "起司飯", "炸舞菇"], "notes": ["不可預約", "辣度選3", "現場排隊約30分"], "guideText": "北海道靈魂美食！Suage+特色是串籤素炸，保留食材原味；GARAKU湯頭較濃郁。推薦點「知床雞」搭配起司飯，將飯浸入湯中享用是道地吃法。", "mapUrl": "https://maps.app.goo.gl/SuagePlus", "contact": "不可預約 / 現場候位", "stayTime": "1.5 小時" },
-        { "time": "22:30", "text": "夜間咖啡", "type": "food", "desc": "ESPRESSO D WORKS", "menu": ["巴斯克起司蛋糕", "拿鐵"], "notes": ["營業至24:00"], "guideText": "札幌有「收尾聖代」文化，這間則是深夜也能吃到的高品質巴斯克蛋糕。氛圍時髦放鬆，適合第一晚整理心情。", "mapUrl": "https://maps.app.goo.gl/EspressoDWorks", "contact": "營業至 23:30", "stayTime": "1 小時" }
+        { "time": "17:20", "text": "航班抵達 CTS", "type": "transport", "desc": "往 B1 搭 JR。", "guideText": "新千歲機場結構簡單，國際線出來後沿著指示標誌走約10分鐘可達國內線B1搭乘JR。建議先買好Kitaca或在售票機買票。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=New+Chitose+Airport+JR+Station" },
+        { "time": "19:45", "text": "飯店 Check-in", "type": "hotel", "desc": "JR-EAST METS", "guideText": "這間飯店最大優勢是「與車站直結」，北口出來步行2分鐘即達。大廳備品豐富，記得拿一些泡澡粉舒緩搭機疲勞。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=JR-East+Hotel+Mets+Sapporo", "contact": "+81-11-729-0011" },
+        { "time": "20:15", "text": "晚餐：湯咖哩", "type": "food", "desc": "Suage+ / GARAKU", "menu": ["知床雞野菜湯咖哩", "起司飯", "炸舞菇"], "notes": ["不可預約", "辣度選3", "現場排隊約30分"], "guideText": "北海道靈魂美食！Suage+特色是串籤素炸，保留食材原味；GARAKU湯頭較濃郁。推薦點「知床雞」搭配起司飯，將飯浸入湯中享用是道地吃法。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Soup+Curry+Suage+", "contact": "不可預約 / 現場候位", "stayTime": "1.5 小時" },
+        { "time": "22:30", "text": "夜間咖啡", "type": "food", "desc": "ESPRESSO D WORKS", "menu": ["巴斯克起司蛋糕", "拿鐵"], "notes": ["營業至24:00"], "guideText": "札幌有「收尾聖代」文化，這間則是深夜也能吃到的高品質巴斯克蛋糕。氛圍時髦放鬆，適合第一晚整理心情。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=ESPRESSO+D+WORKS+Sapporo", "contact": "營業至 23:30", "stayTime": "1 小時" }
       ]
     },
     { 
       "id": 1, "date": "12/09 (二)", "location": "Sapporo → Niseko", "coords": {"lat": 42.8048, "lon": 140.6874}, 
       "hotel": "Park Hyatt Niseko", "hotel_note": "Ski-in Ski-out", 
       "activities": [
-          { "time": "11:30", "text": "午餐：Uni Murakami", "type": "food", "desc": "海膽丼", "menu": ["生海膽丼", "海膽天婦羅", "海鮮燒烤"], "notes": ["價格較高", "建議訂位"], "guideText": "函館名店的分店，主打「無添加明礬」的生海膽，吃起來完全沒有苦味，只有濃郁的甜味與海水香氣，價格稍高但絕對值得。", "mapUrl": "https://maps.app.goo.gl/UniMurakamiSapporo", "contact": "011-290-1000", "stayTime": "1.5 小時" },
-          { "time": "15:00", "text": "JR 移動", "type": "transport", "desc": "往俱知安", "guideText": "這段鐵路風景極美，這季節會經過銀白色的雪原與海岸線。若遇大雪JR容易停駛，請務必隨時關注JR北海道官網運行狀況。", "mapUrl": "https://maps.app.goo.gl/KutchanStation" },
-          { "time": "18:00", "text": "Check-in", "type": "hotel", "desc": "Park Hyatt", "guideText": "二世谷頂級奢華代表。位於Hanazono雪場正下方，Ski-in/out極度方便。大廳的挑高落地窗能直接看到羊蹄山，Check-in 時請準備好相機。", "mapUrl": "https://maps.app.goo.gl/ParkHyattNiseko", "contact": "+81-136-27-1234" }
+          { "time": "11:30", "text": "午餐：Uni Murakami", "type": "food", "desc": "海膽丼", "menu": ["生海膽丼", "海膽天婦羅", "海鮮燒烤"], "notes": ["價格較高", "建議訂位"], "guideText": "函館名店的分店，主打「無添加明礬」的生海膽，吃起來完全沒有苦味，只有濃郁的甜味與海水香氣，價格稍高但絕對值得。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Uni+Murakami+Sapporo", "contact": "011-290-1000", "stayTime": "1.5 小時" },
+          { "time": "15:00", "text": "JR 移動", "type": "transport", "desc": "往俱知安", "guideText": "這段鐵路風景極美，這季節會經過銀白色的雪原與海岸線。若遇大雪JR容易停駛，請務必隨時關注JR北海道官網運行狀況。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Sapporo+Station" },
+          { "time": "18:00", "text": "Check-in", "type": "hotel", "desc": "Park Hyatt", "guideText": "二世谷頂級奢華代表。位於Hanazono雪場正下方，Ski-in/out極度方便。大廳的挑高落地窗能直接看到羊蹄山，Check-in 時請準備好相機。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Park+Hyatt+Niseko+Hanazono", "contact": "+81-136-27-1234" }
       ]
     },
     { 
       "id": 2, "date": "12/10 (三)", "location": "Niseko", "coords": {"lat": 42.8048, "lon": 140.6874}, 
       "hotel": "Park Hyatt Niseko", "hotel_note": "連泊 Day 2", 
       "activities": [
-          { "time": "09:00", "text": "全日滑雪", "type": "activity", "desc": "粉雪天堂", "guideText": "Hanazono雪場對新手友善，有魔毯設施；高手則可挑戰樹林區。粉雪(Japow)摔倒也不痛。記得做好防寒，風鏡和面罩是必備品。", "mapUrl": "https://maps.app.goo.gl/HanazonoResort" },
-          { "time": "12:00", "text": "午餐：Hanazono EDGE", "type": "food", "desc": "雪場餐廳", "menu": ["蟹肉拉麵", "炸豬排咖哩", "披薩"], "notes": ["建議11:30前到", "人潮眾多"], "guideText": "近年翻新的雪場餐廳，挑高設計視野極佳。蟹肉拉麵湯頭鮮美，滑雪後喝熱湯最過癮。午餐時段一位難求，強烈建議提早11:30前入座。", "mapUrl": "https://maps.app.goo.gl/HanazonoEDGE", "contact": "無預約服務", "stayTime": "1 小時" },
-          { "time": "18:00", "text": "Hirafu 晚餐", "type": "food", "desc": "居酒屋/燒肉", "menu": ["成吉思汗烤肉", "北海道生啤酒", "烤羊肉"], "notes": ["需提前預約", "搭飯店接駁車"], "guideText": "Hirafu是二世谷最熱鬧的區域，充滿異國風情。成吉思汗烤羊肉沒有腥味，搭配冰涼的Sapporo Classic啤酒是絕配。", "mapUrl": "https://maps.app.goo.gl/HirafuVillage", "contact": "需查閱特定餐廳", "stayTime": "2 小時" }
+          { "time": "09:00", "text": "全日滑雪", "type": "activity", "desc": "粉雪天堂", "guideText": "Hanazono雪場對新手友善，有魔毯設施；高手則可挑戰樹林區。粉雪(Japow)摔倒也不痛。記得做好防寒，風鏡和面罩是必備品。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Niseko+Hanazono+Resort" },
+          { "time": "12:00", "text": "午餐：Hanazono EDGE", "type": "food", "desc": "雪場餐廳", "menu": ["蟹肉拉麵", "炸豬排咖哩", "披薩"], "notes": ["建議11:30前到", "人潮眾多"], "guideText": "近年翻新的雪場餐廳，挑高設計視野極佳。蟹肉拉麵湯頭鮮美，滑雪後喝熱湯最過癮。午餐時段一位難求，強烈建議提早11:30前入座。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Hanazono+EDGE", "contact": "無預約服務", "stayTime": "1 小時" },
+          { "time": "18:00", "text": "Hirafu 晚餐", "type": "food", "desc": "居酒屋/燒肉", "menu": ["成吉思汗烤肉", "北海道生啤酒", "烤羊肉"], "notes": ["需提前預約", "搭飯店接駁車"], "guideText": "Hirafu是二世谷最熱鬧的區域，充滿異國風情。成吉思汗烤羊肉沒有腥味，搭配冰涼的Sapporo Classic啤酒是絕配。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Niseko+Hirafu+Village", "contact": "需查閱特定餐廳", "stayTime": "2 小時" }
       ]
     },
     { 
       "id": 3, "date": "12/11 (四)", "location": "Niseko", "coords": {"lat": 42.8048, "lon": 140.6874}, 
       "hotel": "Park Hyatt Niseko", "hotel_note": "連泊 Day 3", 
       "activities": [
-          { "time": "13:00", "text": "午餐：手工蕎麥麵", "type": "food", "desc": "Ichimura", "menu": ["鴨肉蕎麥麵", "炸蝦天婦羅", "蕎麥湯"], "notes": ["Cash Only", "賣完為止"], "guideText": "使用二世谷清甜泉水製作的手打十割蕎麥麵，麵條香氣十足。鴨肉蕎麥麵是招牌，湯頭甘甜。注意只收現金，且常常賣完提早打烊。", "mapUrl": "https://maps.app.goo.gl/NisekoIchimura", "contact": "0136-23-0603", "stayTime": "1 小時" },
-          { "time": "18:00", "text": "晚餐：China Kitchen", "type": "food", "desc": "飯店內中餐", "menu": ["北京烤鴨", "四川擔擔麵", "港式點心"], "notes": ["Smart Casual", "房客優先"], "guideText": "玩累了不想出門，飯店內的China Kitchen水準極高。週末有早午餐吃到飽，晚餐則推薦烤鴨與擔擔麵，口味精緻道地，服務也是一流。", "mapUrl": "https://maps.app.goo.gl/ParkHyattChinaKitchen", "contact": "內線直撥餐廳", "stayTime": "2 小時" }
+          { "time": "13:00", "text": "午餐：手工蕎麥麵", "type": "food", "desc": "Ichimura", "menu": ["鴨肉蕎麥麵", "炸蝦天婦羅", "蕎麥湯"], "notes": ["Cash Only", "賣完為止"], "guideText": "使用二世谷清甜泉水製作的手打十割蕎麥麵，麵條香氣十足。鴨肉蕎麥麵是招牌，湯頭甘甜。注意只收現金，且常常賣完提早打烊。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Niseko+Sobadokoro+Rakuichi", "contact": "0136-23-0603", "stayTime": "1 小時" },
+          { "time": "18:00", "text": "晚餐：China Kitchen", "type": "food", "desc": "飯店內中餐", "menu": ["北京烤鴨", "四川擔擔麵", "港式點心"], "notes": ["Smart Casual", "房客優先"], "guideText": "玩累了不想出門，飯店內的China Kitchen水準極高。週末有早午餐吃到飽，晚餐則推薦烤鴨與擔擔麵，口味精緻道地，服務也是一流。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=China+Kitchen+Park+Hyatt+Niseko", "contact": "內線直撥餐廳", "stayTime": "2 小時" }
       ]
     },
     { 
       "id": 4, "date": "12/12 (五)", "location": "CTS Airport", "coords": {"lat": 42.7752, "lon": 141.6923}, 
       "hotel": "Home Sweet Home", "hotel_note": "機場日", 
       "activities": [
-          { "time": "09:20", "text": "巴士出發", "type": "transport", "desc": "前往機場", "guideText": "從二世谷搭巴士直達機場最方便，不用扛行李轉車。冬天路況難料，巴士時間通常抓很寬裕，上車即可補眠欣賞雪景。", "mapUrl": "https://maps.app.goo.gl/HirafuBusStop" },
-          { "time": "13:00", "text": "拉麵道場", "type": "food", "desc": "一幻 / 白樺山莊", "menu": ["鮮蝦鹽味拉麵", "味噌拉麵", "免費水煮蛋"], "notes": ["行李需寄放", "排隊人潮多"], "guideText": "機場國內線3樓的拉麵一級戰區。「一幻」主打濃郁蝦湯，鮮味衝擊；「白樺山莊」則有無限供應的水煮蛋，味噌湯頭偏油香。登機前的最後美味！", "mapUrl": "https://maps.app.goo.gl/CTSRamenDojo", "contact": "機場國內線 3F", "stayTime": "1 小時" },
+          { "time": "09:20", "text": "巴士出發", "type": "transport", "desc": "前往機場", "guideText": "從二世谷搭巴士直達機場最方便，不用扛行李轉車。冬天路況難料，巴士時間通常抓很寬裕，上車即可補眠欣賞雪景。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Park+Hyatt+Niseko+Bus+Stop" },
+          { "time": "13:00", "text": "拉麵道場", "type": "food", "desc": "一幻 / 白樺山莊", "menu": ["鮮蝦鹽味拉麵", "味噌拉麵", "免費水煮蛋"], "notes": ["行李需寄放", "排隊人潮多"], "guideText": "機場國內線3樓的拉麵一級戰區。「一幻」主打濃郁蝦湯，鮮味衝擊；「白樺山莊」則有無限供應的水煮蛋，味噌湯頭偏油香。登機前的最後美味！", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Hokkaido+Ramen+Dojo+New+Chitose", "contact": "機場國內線 3F", "stayTime": "1 小時" },
           { "time": "14:30", "text": "甜點 & 伴手禮巡禮", "type": "food", "desc": "國內線 2F 掃貨", "menu": ["北菓樓 夢不思議泡芙 (必吃!)", "LeTAO 起司霜淇淋", "Calbee+ 現炸薯條", "雪印 北海道牛奶霜淇淋", "Kinotoya 起司塔"], "notes": ["國內線比較好逛", "保冷袋必備"], "guideText": "新千歲機場國內線2F是伴手禮一級戰區！\n\n【機場必買 Top 10】\n1. 北菓樓 (妖精之森/夢不思議泡芙)\n2. 六花亭 (奶油葡萄夾心/草莓巧克力)\n3. ROYCE (生巧克力/洋芋片)\n4. LeTAO (雙層起司蛋糕)\n5. Snaffle's (起司舒芙蕾)\n6. Calbee+ (薯條三兄弟)\n7. 白色戀人\n8. HORI (哈密瓜果凍)\n9. Kitaichi Glass (玻璃杯)\n10. 十勝牛奶布丁", "mapUrl": "https://www.new-chitose-airport.jp/tw/floor/2f.html", "contact": "國內線 2F", "stayTime": "2.5 小時" },
-          { "time": "18:40", "text": "TR893 起飛", "type": "transport", "desc": "返台", "guideText": "酷航櫃台通常在起飛前3小時開櫃，建議提早去排隊托運，因為新千歲國際線免稅店排隊結帳人潮通常非常驚人。", "mapUrl": "https://maps.app.goo.gl/NewChitoseIntl" }
+          { "time": "18:40", "text": "TR893 起飛", "type": "transport", "desc": "返台", "guideText": "酷航櫃台通常在起飛前3小時開櫃，建議提早去排隊托運，因為新千歲國際線免稅店排隊結帳人潮通常非常驚人。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=New+Chitose+Airport+International+Terminal" }
       ]
     }
   ]
@@ -457,7 +448,7 @@ def ticket_modal(ticket_key, title):
 # --- 5. 頂部導覽列 ---
 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-# 使用 7 個等寬欄位
+# 使用 7 個等寬欄位 (手機版 CSS 已強制縮小)
 nav_cols = st.columns(7)
 nav_items = [
     ("🏠", "overview"), 
@@ -471,7 +462,6 @@ nav_items = [
 
 for i, (label, view_name) in enumerate(nav_items):
     is_active = st.session_state.view == view_name
-    # 觸發 primary 樣式 (白色背景 + 金邊)
     if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
         st.session_state.view = view_name
         st.rerun()
@@ -695,8 +685,13 @@ def view_day(day_id):
             
             st.write("")
 
+            # ★★★ Google Map 按鈕修正 ★★★
+            if 'mapUrl' in act:
+                # 使用 CSS class 來確保樣式，並使用 st.link_button (需 Streamlit 1.27+) 或 HTML
+                st.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
+                st.write("") # Spacer
+
             actions = []
-            if 'mapUrl' in act: actions.append("map")
             if act['type'] == 'transport':
                 actions.append("ticket_w")
                 actions.append("ticket_c")
@@ -704,9 +699,6 @@ def view_day(day_id):
             if actions:
                 cols = st.columns(len(actions))
                 col_idx = 0
-                if "map" in actions:
-                    with cols[col_idx]: st.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
-                    col_idx += 1
                 if "ticket_w" in actions:
                     with cols[col_idx]:
                         if st.button("🎫 Ticket (W)", key=f"t_{day_id}_{i}_w", use_container_width=True): ticket_modal(f"t_{day_id}_{i}_w", f"Ticket (W) - {act['text']}")
@@ -718,13 +710,13 @@ def view_day(day_id):
 def view_packing():
     st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
     
-    total_items = sum(len(cat['items']) for cat in st.session_state.packing_list)
-    checked_items = sum(1 for k, v in st.session_state.packing.items() if v)
+    total = sum(len(cat['items']) for cat in st.session_state.packing_list)
+    checked = sum(1 for k, v in st.session_state.packing.items() if v)
     
     st.markdown(f"""<style>
         .stProgress > div > div > div > div {{ background-color: {COLORS['warm_gold']}; }}
     </style>""", unsafe_allow_html=True)
-    st.progress(checked_items / total_items if total_items > 0 else 0)
+    st.progress(checked / total if total > 0 else 0)
     
     st.write("")
     
@@ -760,7 +752,7 @@ def view_packing():
             
             st.markdown("</div>", unsafe_allow_html=True)
             
-    # 新增物品/分類
+    # 新增物品/分類區塊
     st.markdown("---")
     st.markdown("##### ➕ Add New Item")
     
