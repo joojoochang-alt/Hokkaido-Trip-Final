@@ -5,7 +5,7 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Mobile Packing List Fix) ---
+# --- 1. 設定頁面與 CSS (Muji Final Polish) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
@@ -51,30 +51,23 @@ st.markdown(f"""
     #MainMenu, footer, header {{visibility: hidden;}}
 
     /* -----------------------------------------
-       Checkbox 樣式修正 (去黑 / 去紅 / 改金)
+       Checkbox 樣式修正
        ----------------------------------------- */
-    
-    /* 1. 針對 Checkbox 的外框 (span) */
     div[data-testid="stCheckbox"] label span[data-baseweb="checkbox"] {{
-        background-color: #FFFFFF !important; /* 強制白底 (未勾選) */
-        border-color: {COLORS['line_light']} !important; /* 淺灰框 */
+        background-color: #FFFFFF !important;
+        border-color: {COLORS['line_light']} !important;
     }}
-    
-    /* 2. 針對已勾選狀態 (Checked) */
     div[data-testid="stCheckbox"] label[aria-checked="true"] span[data-baseweb="checkbox"] {{
-        background-color: {COLORS['warm_gold']} !important; /* 金色底 */
+        background-color: {COLORS['warm_gold']} !important;
         border-color: {COLORS['warm_gold']} !important;
     }}
-    
-    /* 3. 針對勾選後的打勾符號 (SVG) */
     div[data-testid="stCheckbox"] label[aria-checked="true"] span[data-baseweb="checkbox"] div {{
-        color: #FFFFFF !important; /* 白勾 */
+        color: #FFFFFF !important;
     }}
 
     /* -----------------------------------------
-       導覽列樣式 (橫向 + 縮小)
+       導覽列樣式 (手機橫向)
        ----------------------------------------- */
-    
     div[data-testid="column"] button {{
         background-color: {COLORS['nav_bg_inactive']} !important;
         border: none !important;
@@ -242,7 +235,7 @@ st.markdown(f"""
     }}
     .info-val-fix {{
         font-family: 'Shippori Mincho', serif;
-        font-size: 1.5rem;
+        font-size: 1.8rem; /* 稍微加大字體 */
         font-weight: 600;
         color: {COLORS['text_primary']};
     }}
@@ -304,21 +297,13 @@ st.markdown(f"""
         background-color: {COLORS['line_light']};
     }}
     
-    /* 刪除按鈕樣式 */
+    /* 刪除按鈕 */
     .delete-btn button {{
         border: none !important;
         color: #E57373 !important;
-        padding: 0px !important;
-        width: 100% !important;
-        height: auto !important;
-        font-size: 1rem !important;
+        padding: 0px 8px !important;
+        font-size: 0.8rem !important;
         background: transparent !important;
-        box-shadow: none !important;
-    }}
-    .delete-btn button:hover {{
-        color: #D32F2F !important;
-        background: transparent !important;
-        box-shadow: none !important;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -338,7 +323,7 @@ DEFAULT_PACKING = [
 if 'packing_list' not in st.session_state:
     st.session_state.packing_list = DEFAULT_PACKING
 
-# ★★★ Google Maps 連結 ★★★
+# Google Maps 連結
 APP_DATA = {
   "flight": { 
     "outbound": { "code": "TR892", "time": "12:30", "arrival": "17:20" }, 
@@ -505,7 +490,6 @@ nav_items = [
 
 for i, (label, view_name) in enumerate(nav_items):
     is_active = st.session_state.view == view_name
-    # 觸發 primary 樣式 (白色背景 + 金邊)
     if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
         st.session_state.view = view_name
         st.rerun()
@@ -553,7 +537,7 @@ def view_overview():
     </a>
     """, unsafe_allow_html=True)
 
-    # Info Grid
+    # Info Grid (修正後的匯率顯示)
     rate = get_exchange_rate()
     temp1, weather1 = get_weather(43.06, 141.35) # Sapporo
     temp2, weather2 = get_weather(42.80, 140.68) # Niseko
@@ -564,10 +548,9 @@ def view_overview():
         <div class="info-box-content">
             <div class="info-label-fix">
                 <span>EXCHANGE</span>
-                <span style="font-weight:400;">¥1000</span>
             </div>
-            <div class="info-val-fix">{int(rate*1000) if rate else '...'} <span style="font-size:0.9rem; font-weight:400;">TWD</span></div>
-            <div style="font-size:0.7rem; color:{COLORS['text_secondary']}; text-align:right;">1 JPY = {rate:.3f}</div>
+            <div class="info-val-fix">{rate:.4f}</div>
+            <div style="font-size:0.7rem; color:{COLORS['text_secondary']};">JPY / TWD</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -589,7 +572,7 @@ def view_overview():
         </div>
         """, unsafe_allow_html=True)
 
-    st.write("")
+    st.write("") # 確保間距
 
     # Flights Card
     st.markdown(f'<div class="minimal-card">', unsafe_allow_html=True)
@@ -758,34 +741,35 @@ def view_day(day_id):
 def view_packing():
     st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
     
-    total_items = sum(len(cat['items']) for cat in st.session_state.packing_list)
-    checked_items = sum(1 for k, v in st.session_state.packing.items() if v)
+    total = sum(len(cat['items']) for cat in st.session_state.packing_list)
+    checked = sum(1 for k, v in st.session_state.packing.items() if v)
     
     st.markdown(f"""<style>
         .stProgress > div > div > div > div {{ background-color: {COLORS['warm_gold']}; }}
     </style>""", unsafe_allow_html=True)
-    st.progress(checked_items / total_items if total_items > 0 else 0)
+    st.progress(checked / total if total > 0 else 0)
     
     st.write("")
     
     # 顯示清單 (含刪除功能)
     for i, cat in enumerate(st.session_state.packing_list[:]):
-        with st.container(border=True):
+        with st.container():
             col_title, col_del_cat = st.columns([8, 1])
             with col_title:
-                st.markdown(f"""<h4 style='margin:0; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif;'>{cat['category']}</h4>""", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div style="padding: 1.2rem 1.2rem 0.5rem 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-bottom:none; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                    <h4 style='margin:0; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif;'>{cat['category']}</h4>
+                </div>
+                """, unsafe_allow_html=True)
             with col_del_cat:
-                # 這裡用空的 container 佔位調整排版，或直接放按鈕
-                st.markdown('<div style="height: 5px;"></div>', unsafe_allow_html=True)
                 if st.button("🗑️", key=f"del_cat_{i}", help="Delete Category"):
                     st.session_state.packing_list.pop(i)
                     st.rerun()
 
-            st.markdown(f"""<div style="margin-bottom: 10px; border-bottom: 1px solid {COLORS['line_light']};"></div>""", unsafe_allow_html=True)
+            st.markdown(f"""<div style="padding: 0 1.2rem 1.2rem 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-top:none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; margin-bottom: 1rem;">""", unsafe_allow_html=True)
             
             for j, item in enumerate(cat['items']):
-                # 使用 columns 來排版 checkbox 和 刪除按鈕
-                c1, c2 = st.columns([5, 1]) # 調整比例適應手機
+                c1, c2 = st.columns([5, 1]) # 保持清單的手機版型
                 with c1:
                     key = f"pack_{item}"
                     val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
@@ -796,6 +780,8 @@ def view_packing():
                         st.session_state.packing_list[i]['items'].pop(j)
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
             
     # 新增物品/分類區塊
     st.markdown("---")
