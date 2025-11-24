@@ -17,6 +17,7 @@ COLORS = {
     'accent_warm': '#C7B299',   # 燕麥色 (強調)
     'accent_deep': '#8C8376',   # 深卡其 (選中狀態)
     'line_light': '#EAE8E4',    # 極細淺灰線
+    'alert_red': '#B94047',     # 警示紅 (低飽和)
 }
 
 # 注入 CSS
@@ -45,7 +46,7 @@ st.markdown(f"""
         background: {COLORS['surface']};
         border: 1px solid {COLORS['line_light']};
         border-radius: 12px;
-        box-shadow: none; /* 移除陰影 */
+        box-shadow: none;
         padding: 1.5rem;
         margin-bottom: 1.2rem;
     }}
@@ -169,7 +170,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 2. 資料與狀態管理 ---
-# (保持不變)
 if 'view' not in st.session_state: st.session_state.view = 'overview'
 if 'tickets' not in st.session_state: st.session_state.tickets = {}
 if 'packing' not in st.session_state: st.session_state.packing = {}
@@ -241,7 +241,6 @@ APP_DATA = {
 }
 
 # --- 3. 核心功能函式 ---
-# (保持不變)
 def get_weather(lat, lon):
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo"
@@ -285,7 +284,6 @@ def chat_with_gemini(user_input):
         return f"AI 連線錯誤: {str(e)}"
 
 # --- 4. 票券視窗 ---
-# (樣式微調以配合新風格)
 @st.dialog("Digital Voucher")
 def ticket_modal(ticket_key, title):
     existing = st.session_state.tickets.get(ticket_key, {"orderNumber": "", "url": "", "note": ""})
@@ -333,7 +331,7 @@ def ticket_modal(ticket_key, title):
 # --- 5. 頁面視圖 ---
 
 def view_overview():
-    # Header: 仿照截圖風格，襯線體，細橫線
+    # Header
     st.markdown(f"""
     <div style='text-align:center; padding: 30px 0 20px;'>
         <h1 style='font-family: "Shippori Mincho", serif; font-size: 2.5rem; margin-bottom: 8px; letter-spacing: 1px; font-weight: 500;'>Hokkaido</h1>
@@ -342,7 +340,7 @@ def view_overview():
     </div>
     """, unsafe_allow_html=True)
     
-    # VJW Card: 仿照截圖，簡約白色長條按鈕，右側箭頭
+    # VJW Card
     vjw_url = "https://vjw-lp.digital.go.jp/en/"
     st.markdown(f"""
     <style>
@@ -370,7 +368,7 @@ def view_overview():
     </a>
     """, unsafe_allow_html=True)
 
-    # Info Grid: 仿照截圖，簡約線條框
+    # Info Grid
     rate = get_exchange_rate()
     temp1, weather1 = get_weather(43.06, 141.35) # Sapporo
     temp2, weather2 = get_weather(42.80, 140.68) # Niseko (approx)
@@ -403,7 +401,7 @@ def view_overview():
     </div>
     """, unsafe_allow_html=True)
 
-    # Flights Card: 仿照截圖，簡約線條框
+    # Flights Card
     st.markdown(f'<div class="minimal-card">', unsafe_allow_html=True)
     st.markdown(f"<h3 style='font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:8px; font-weight: 500;'>✈️ 航班 <span style='margin-left: auto; color: {COLORS['text_secondary']}; font-size: 1.2rem;'>•••</span></h3>", unsafe_allow_html=True)
     f1, f2 = st.columns(2)
@@ -419,6 +417,27 @@ def view_overview():
         st.session_state.show_chat = not st.session_state.show_chat
     if st.session_state.show_chat: view_assistant()
 
+    # --- 修正處：加入緊急求助區塊 (Minimalist Style) ---
+    st.markdown(f"""
+    <div class="minimal-card" style="border-color: {COLORS['line_light']}; background: {COLORS['surface']}; margin-top: 30px;">
+        <div style="font-size: 0.7rem; font-weight: 600; color: {COLORS['alert_red']}; letter-spacing: 0.1em; margin-bottom: 12px;">緊急求助 / EMERGENCY</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+             <div style="text-align: center; width: 48%;">
+                 <div style="font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 500; color: {COLORS['text_primary']};">110</div>
+                 <div style="font-size: 0.7rem; color: {COLORS['text_secondary']};">報警 Police</div>
+             </div>
+             <div style="text-align: center; width: 48%; border-left: 1px solid {COLORS['line_light']};">
+                 <div style="font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 500; color: {COLORS['text_primary']};">119</div>
+                 <div style="font-size: 0.7rem; color: {COLORS['text_secondary']};">救護 Ambulance</div>
+             </div>
+        </div>
+        <div style="background: #F9F9F9; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid {COLORS['line_light']};">
+             <div style="font-size: 0.75rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;">札幌辦事處 Sapporo Office</div>
+             <div style="font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 500; color: {COLORS['text_primary']};">080-1460-2568</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 def view_day(day_id):
     day = APP_DATA['days'][day_id]
     
@@ -430,13 +449,12 @@ def view_day(day_id):
     # Header: 仿照截圖風格，大號日期，定位，膠囊天氣
     weather_html = f"""
 <div style="text-align:center; margin-bottom: 2rem; padding-top: 10px;">
-    <h2 style="font-family: 'Shippori Mincho', serif; font-size: 3rem; margin:0 0 4px 0; color:{COLORS['text_primary']}; letter-spacing: 1px; font-weight: 500;">{day['date'].split(' ')[0]}</h2>
-    <div style="color:{COLORS['text_secondary']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 6px;"><span style="font-size: 1rem;">📍</span> {day['location']}</div>
-    
-    <div style="display: inline-flex; align-items: center; gap: 8px; background: {COLORS['surface']}; padding: 6px 16px; border-radius: 20px; border: 1px solid {COLORS['line_light']};">
-            <span style="font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 500; color: {COLORS['text_primary']}">{temp}°</span>
-            <span style="font-size: 0.9rem; color: {COLORS['text_secondary']}; border-left: 1px solid {COLORS['line_light']}; padding-left: 8px;">{w_text}</span>
-    </div>
+<h2 style="font-family: 'Shippori Mincho', serif; font-size: 3rem; margin:0 0 4px 0; color:{COLORS['text_primary']}; letter-spacing: 1px; font-weight: 500;">{day['date'].split(' ')[0]}</h2>
+<div style="color:{COLORS['text_secondary']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 6px;"><span style="font-size: 1rem;">📍</span> {day['location']}</div>
+<div style="display: inline-flex; align-items: center; gap: 8px; background: {COLORS['surface']}; padding: 6px 16px; border-radius: 20px; border: 1px solid {COLORS['line_light']};">
+<span style="font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 500; color: {COLORS['text_primary']}">{temp}°</span>
+<span style="font-size: 0.9rem; color: {COLORS['text_secondary']}; border-left: 1px solid {COLORS['line_light']}; padding-left: 8px;">{w_text}</span>
+</div>
 </div>
 """
     st.markdown(weather_html, unsafe_allow_html=True)
