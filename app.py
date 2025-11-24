@@ -14,12 +14,13 @@ COLORS = {
     'surface': '#FFFFFF',       # 純白卡片
     'text_primary': '#5B5551',  # 文字: 深暖棕
     'text_secondary': '#9C8E7E',# 文字: 淺灰褐
+    
     'accent_warm': '#C7B299',   # 燕麥色
-    'accent_deep': '#8C8376',   # 深卡其
+    'accent_deep': '#8C8376',   # 深卡其 (Note 標題)
     
     # 導覽列與互動色
-    'rose_mist': '#FFE4E1',     # 霧玫瑰 (Hover)
-    'warm_gold': '#DEB887',     # 暖金沙 (Active)
+    'linen_mist': '#FAF0E6',    # 亞麻色 (懸停 Hover / 裝飾背景) - 取代原本的霧玫瑰
+    'warm_gold': '#DEB887',     # 暖金沙 (Active / 重點)
     'nav_bg_inactive': '#F0EFEA', # 導覽列未選中背景
     
     'line_light': '#E0DCD8',    # 線條顏色
@@ -52,19 +53,19 @@ st.markdown(f"""
         color: {COLORS['text_secondary']} !important;
         font-weight: 500 !important;
         border-radius: 12px !important; /* 統一圓角 */
-        height: 48px !important; /* 統一高度 */
-        width: 100% !important;  /* 填滿欄位 */
+        height: 48px !important;
+        width: 100% !important;
         padding: 0 !important;
         transition: all 0.3s ease !important;
         display: flex;
         align-items: center;
         justify-content: center;
     }}
-    /* 懸停狀態 (Hover) - 霧玫瑰色，半透明感 */
+    /* 懸停狀態 (Hover) - 改為亞麻色 */
     div[data-testid="column"] button:hover {{
-        background-color: {COLORS['rose_mist']} !important;
+        background-color: {COLORS['linen_mist']} !important;
         color: {COLORS['text_primary']} !important;
-        opacity: 0.85;
+        opacity: 1; /* 移除半透明，讓顏色更實 */
         transform: translateY(-2px);
     }}
     /* 選中狀態 (Active) - 暖金沙色 */
@@ -86,7 +87,7 @@ st.markdown(f"""
         margin-bottom: 1.2rem;
     }}
 
-    /* 住宿卡片容器邊框 (Streamlit container) */
+    /* 住宿卡片容器邊框 */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         border-color: {COLORS['line_light']} !important;
         border-radius: 16px !important;
@@ -94,16 +95,17 @@ st.markdown(f"""
     }}
     
     /* 一般功能按鈕 (Booking Info/Ticket 等) */
-    .stButton button {{
-        height: auto !important; /* 重置高度，避免影響導覽列設定 */
-        padding: 6px 20px !important;
+    .element-container .stButton button {{
+        height: auto !important;
     }}
-    /* 針對非導覽列的按鈕進行樣式覆蓋 (透過父層選擇器較難，這裡使用通用規則微調) */
+    
+    /* 針對一般按鈕的樣式覆蓋 */
     div[data-testid="stVerticalBlock"] > div > div > div > div > .stButton button {{
         background-color: transparent;
         border: 1px solid {COLORS['line_light']} !important;
         color: {COLORS['text_secondary']};
         border-radius: 24px;
+        padding: 6px 20px;
     }}
     div[data-testid="stVerticalBlock"] > div > div > div > div > .stButton button:hover {{
         background-color: #FFFFFF !important;
@@ -192,7 +194,7 @@ st.markdown(f"""
     .pass-notch-left {{ left: -10px; border-right: none; }}
     .pass-notch-right {{ right: -10px; border-left: none; }}
 
-    /* 時間軸 */
+    /* 時間軸 - 金色點綴 */
     .timeline-point {{
         width: 9px;
         height: 9px;
@@ -372,31 +374,7 @@ def ticket_modal(ticket_key, title):
             st.session_state.is_editing = False
             st.rerun()
 
-# --- 5. 頂部導覽列 (7等份和諧色塊) ---
-st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
-
-# 使用 7 個等寬欄位
-nav_cols = st.columns(7)
-nav_items = [
-    ("🏠", "overview"), 
-    ("08", 0), 
-    ("09", 1), 
-    ("10", 2), 
-    ("11", 3), 
-    ("12", 4), 
-    ("🎒", "packing")
-]
-
-for i, (label, view_name) in enumerate(nav_items):
-    is_active = st.session_state.view == view_name
-    # 使用 primary 樣式觸發 Active (暖金沙色)，secondary 觸發 Inactive (淺灰)
-    if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
-        st.session_state.view = view_name
-        st.rerun()
-
-st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-
-# --- 6. 頁面視圖 ---
+# --- 5. 頁面視圖函式 ---
 
 def view_overview():
     # Header
@@ -554,7 +532,7 @@ def view_day(day_id):
 """
     st.markdown(weather_html, unsafe_allow_html=True)
 
-    # Hotel Card (整合版：名稱 + 虛線 + 按鈕)
+    # Hotel Card
     with st.container(border=True):
         st.markdown(f"""
         <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -601,9 +579,9 @@ def view_day(day_id):
                 """, unsafe_allow_html=True)
 
             if act['type'] == 'food' and 'menu' in act:
-                # 使用霧玫瑰色 #FFE4E1 作為背景
+                # 更新為 linen_mist 亞麻色背景
                 st.markdown(f"""
-                <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: {COLORS['rose_mist']}; border: 1px solid {COLORS['rose_mist']};">
+                <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: {COLORS['linen_mist']}; border: 1px solid {COLORS['linen_mist']};">
                     <div style="font-size:0.75rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
                     <ul style="margin: 0; padding-left: 20px; color: {COLORS['text_primary']}; font-size: 0.95rem;">
                         {''.join([f'<li style="margin-bottom:4px;">{m}</li>' for m in act['menu']])}
@@ -658,7 +636,29 @@ def view_packing():
                 st.session_state.packing[key] = val
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 7. 渲染主畫面 ---
+# --- 6. 導覽列與主程式路由 (Bottom) ---
+st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+
+nav_cols = st.columns(7)
+nav_items = [
+    ("🏠", "overview"), 
+    ("08", 0), 
+    ("09", 1), 
+    ("10", 2), 
+    ("11", 3), 
+    ("12", 4), 
+    ("🎒", "packing")
+]
+
+for i, (label, view_name) in enumerate(nav_items):
+    is_active = st.session_state.view == view_name
+    if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
+        st.session_state.view = view_name
+        st.rerun()
+
+st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+
+# 主畫面路由
 if st.session_state.view == 'overview': view_overview()
 elif st.session_state.view == 'packing': view_packing()
 elif isinstance(st.session_state.view, int): view_day(st.session_state.view)
