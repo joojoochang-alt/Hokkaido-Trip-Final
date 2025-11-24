@@ -5,110 +5,98 @@ import google.generativeai as genai
 import json
 import os
 
-# --- 1. 設定頁面與 CSS (Modern Japanese Earth Style) ---
+# --- 1. 設定頁面與 CSS (Muji Minimalist Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
-# 全新大地色系定義 (Modern Earth Tones)
+# Muji 風格配色與樣式定義
 COLORS = {
-    'bg_main': '#FDFBF7',       # 極淺暖米白背景 (Warm Off-White)
-    'surface': '#FFFFFF',       # 純白卡片表面
-    'text_primary': '#4A4238',  # 暖深炭棕色
-    'text_secondary': '#8C8376',# 暖灰褐
-    'accent_warm': '#C7B299',   # 燕麥色/淺駝色
-    'accent_deep': '#9C8E7E',   # 深卡其
-    'terracotta': '#B07D62',    # 柔和陶土色
-    'shadow_warm': 'rgba(74, 66, 56, 0.08)' # 極柔和暖陰影
+    'bg_main': '#F8F7F3',       # 極淺米色背景 (截圖風格)
+    'surface': '#FFFFFF',       # 純白卡片
+    'text_primary': '#5B5551',  # 深棕灰主文字
+    'text_secondary': '#A09B96',# 淺灰輔助文字
+    'accent_warm': '#C7B299',   # 燕麥色 (強調)
+    'accent_deep': '#8C8376',   # 深卡其 (選中狀態)
+    'line_light': '#EAE8E4',    # 極細淺灰線
 }
 
 # 注入 CSS
 st.markdown(f"""
     <style>
-    /* 引入現代無襯線字體 */
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+    /* 引入襯線體字體 */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Shippori+Mincho:wght@400;500;600&display=swap');
 
     /* 全局設定 */
     .stApp {{
         background-color: {COLORS['bg_main']};
-        /* 微妙的紙張紋理 */
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
-        font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+        font-family: 'Shippori Mincho', 'Noto Serif TC', serif;
         color: {COLORS['text_primary']};
     }}
     
     h1, h2, h3, h4, h5, h6 {{
-        font-family: 'Montserrat', 'Noto Sans TC', sans-serif !important;
-        font-weight: 600 !important;
+        font-family: 'Shippori Mincho', 'Noto Serif TC', serif !important;
+        font-weight: 500 !important;
         color: {COLORS['text_primary']} !important;
     }}
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* 現代日式卡片 (無邊框，柔和陰影) */
-    .modern-card {{
+    /* 簡約日式卡片 (極細邊框，無陰影) */
+    .minimal-card {{
         background: {COLORS['surface']};
-        border: none;
-        border-radius: 24px;
-        box-shadow: 0 8px 24px {COLORS['shadow_warm']}, 0 2px 8px {COLORS['shadow_warm']};
+        border: 1px solid {COLORS['line_light']};
+        border-radius: 12px;
+        box-shadow: none; /* 移除陰影 */
         padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 1.2rem;
     }}
     
-    /* 現代按鈕樣式 */
+    /* 簡約按鈕樣式 (無背景，細邊框) */
     .stButton button {{
-        background-color: {COLORS['surface']};
-        border: none !important;
+        background-color: transparent;
+        border: 1px solid {COLORS['line_light']} !important;
         color: {COLORS['text_secondary']};
-        border-radius: 30px;
-        padding: 8px 20px;
-        font-weight: 500;
-        box-shadow: 0 2px 6px {COLORS['shadow_warm']};
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-weight: 400;
+        box-shadow: none;
         transition: all 0.2s ease;
+        font-family: 'Shippori Mincho', serif;
     }}
     .stButton button:hover {{
         color: {COLORS['text_primary']};
-        background-color: {COLORS['bg_main']};
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px {COLORS['shadow_warm']};
+        border-color: {COLORS['accent_warm']} !important;
     }}
     .stButton button[kind="primary"] {{
-        background-color: {COLORS['accent_warm']} !important;
+        background-color: {COLORS['accent_deep']} !important;
         color: white !important;
-        box-shadow: 0 4px 10px rgba(199, 178, 153, 0.4) !important;
+        border: none !important;
     }}
 
-    /* 天氣與匯率區塊 */
-    .info-grid-modern {{
+    /* 天氣與匯率區塊 (簡約線條設計) */
+    .info-grid-minimal {{
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
         margin-bottom: 1.5rem;
     }}
-    .info-box-modern {{
+    .info-box-minimal {{
         background: {COLORS['surface']};
-        border-radius: 20px;
+        border-radius: 12px;
         padding: 1.2rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        height: 110px;
-        box-shadow: 0 4px 16px {COLORS['shadow_warm']};
-        border: none;
+        border: 1px solid {COLORS['line_light']};
     }}
-    .info-label-modern {{
+    .info-label-minimal {{
         font-size: 0.7rem;
         font-weight: 600;
         color: {COLORS['text_secondary']};
         text-transform: uppercase;
-        letter-spacing: 0.15em;
-        margin-bottom: 6px;
+        letter-spacing: 0.1em;
+        margin-bottom: 8px;
     }}
-    .info-value-modern {{
-        font-family: 'Montserrat', sans-serif;
-        font-size: 1.8rem;
-        font-weight: 700;
+    .info-value-minimal {{
+        font-family: 'Shippori Mincho', serif;
+        font-size: 1.6rem;
+        font-weight: 500;
         color: {COLORS['text_primary']};
         line-height: 1.1;
     }}
@@ -119,24 +107,25 @@ st.markdown(f"""
         border: none;
         box-shadow: none;
     }}
+    div[data-testid="stExpander"] summary {{
+        color: {COLORS['text_primary']};
+    }}
     
-    /* Ticket Style */
+    /* Ticket Style (簡約) */
     .wallet-pass {{
         background-color: #FFFFFF;
-        border-radius: 24px;
+        border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.06);
-        position: relative;
-        font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+        border: 1px solid {COLORS['line_light']};
+        font-family: 'Shippori Mincho', serif;
         margin-bottom: 20px;
-        border: none;
     }}
     .pass-header {{
-        padding: 28px;
-        background: linear-gradient(to bottom right, #F8F4F0, #FDFBF7);
+        padding: 24px;
+        background: #F8F7F3;
     }}
     .pass-notch-container {{
-        height: 24px;
+        height: 20px;
         position: relative;
         display: flex;
         align-items: center;
@@ -144,25 +133,43 @@ st.markdown(f"""
         background: #FFFFFF;
     }}
     .pass-notch-left, .pass-notch-right {{
-        width: 24px;
-        height: 24px;
-        background-color: rgba(0,0,0,0.5);
+        width: 20px;
+        height: 20px;
+        background-color: {COLORS['bg_main']};
         border-radius: 50%;
         position: absolute;
         top: 0;
         z-index: 10;
+        border: 1px solid {COLORS['line_light']};
     }}
-    .pass-notch-left {{ left: -12px; }}
-    .pass-notch-right {{ right: -12px; }}
+    .pass-notch-left {{ left: -10px; border-right: none; }}
+    .pass-notch-right {{ right: -10px; border-left: none; }}
     .pass-dashed-line {{
-        width: 85%;
-        border-top: 2px dashed {COLORS['accent_warm']};
-        opacity: 0.5;
+        width: 90%;
+        border-top: 1px dashed {COLORS['line_light']};
+    }}
+
+    /* 時間軸樣式 */
+    .timeline-point {{
+        width: 8px;
+        height: 8px;
+        background-color: {COLORS['accent_warm']};
+        border-radius: 50%;
+        margin-right: 12px;
+    }}
+    .timeline-line {{
+        position: absolute;
+        left: 3px;
+        top: 24px;
+        bottom: -20px;
+        width: 1px;
+        background-color: {COLORS['line_light']};
     }}
     </style>
 """, unsafe_allow_html=True)
 
 # --- 2. 資料與狀態管理 ---
+# (保持不變)
 if 'view' not in st.session_state: st.session_state.view = 'overview'
 if 'tickets' not in st.session_state: st.session_state.tickets = {}
 if 'packing' not in st.session_state: st.session_state.packing = {}
@@ -234,6 +241,7 @@ APP_DATA = {
 }
 
 # --- 3. 核心功能函式 ---
+# (保持不變)
 def get_weather(lat, lon):
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo"
@@ -277,6 +285,7 @@ def chat_with_gemini(user_input):
         return f"AI 連線錯誤: {str(e)}"
 
 # --- 4. 票券視窗 ---
+# (樣式微調以配合新風格)
 @st.dialog("Digital Voucher")
 def ticket_modal(ticket_key, title):
     existing = st.session_state.tickets.get(ticket_key, {"orderNumber": "", "url": "", "note": ""})
@@ -287,21 +296,21 @@ def ticket_modal(ticket_key, title):
         st.markdown(f"""
         <div class="wallet-pass">
             <div class="pass-header">
-                <div style="font-size: 10px; font-weight: bold; color: {COLORS['accent_deep']}; letter-spacing: 2px;">RESERVATION</div>
-                <div style="font-size: 22px; font-weight: 700; color: {COLORS['text_primary']}; margin-top:4px;">{title}</div>  
-                <div style="font-size: 12px; color: {COLORS['text_secondary']}; margin-top: 8px;">{existing.get('note', '')}</div>
-                <div style="margin-top: 35px;">
-                    <div style="font-size: 10px; font-weight: bold; color: {COLORS['accent_deep']}; letter-spacing: 2px;">CONFIRMATION NO.</div>
-                    <div style="font-size: 24px; font-weight: 700; font-family: 'Montserrat', monospace; color: {COLORS['text_primary']}; letter-spacing: 1px;">{existing.get('orderNumber', '—')}</div>
+                <div style="font-size: 10px; font-weight: bold; color: {COLORS['text_secondary']}; letter-spacing: 1px;">RESERVATION</div>
+                <div style="font-size: 20px; font-weight: 500; color: {COLORS['text_primary']}; margin-top:4px; font-family: 'Shippori Mincho', serif;">{title}</div>  
+                <div style="font-size: 12px; color: {COLORS['text_secondary']}; margin-top: 6px;">{existing.get('note', '')}</div>
+                <div style="margin-top: 30px;">
+                    <div style="font-size: 10px; font-weight: bold; color: {COLORS['text_secondary']}; letter-spacing: 1px;">CONFIRMATION NO.</div>
+                    <div style="font-size: 22px; font-weight: 500; font-family: monospace; color: {COLORS['text_primary']}; letter-spacing: 1px;">{existing.get('orderNumber', '—')}</div>
                 </div>
             </div>
             <div class="pass-notch-container">
-                <div class="pass-notch-left" style="background-color: #262730;"></div>
+                <div class="pass-notch-left"></div>
                 <div class="pass-dashed-line"></div>
-                <div class="pass-notch-right" style="background-color: #262730;"></div>
+                <div class="pass-notch-right"></div>
             </div>
-            <div style="padding: 24px; text-align: center; background: #FAFAFA;">
-                <div style="display: inline-flex; align-items: center; gap: 6px; color: #6B8E23; font-weight: 600; font-size: 0.9rem;">
+            <div style="padding: 20px; text-align: center; background: #FAFAFA;">
+                <div style="display: inline-flex; align-items: center; gap: 6px; color: #6B8E23; font-weight: 500; font-size: 0.9rem;">
                     <span>✅</span> <span>Ready to Use</span>
                 </div>
             </div>
@@ -324,161 +333,157 @@ def ticket_modal(ticket_key, title):
 # --- 5. 頁面視圖 ---
 
 def view_overview():
+    # Header: 仿照截圖風格，襯線體，細橫線
     st.markdown(f"""
-    <div style='text-align:center; padding: 40px 0 30px;'>
-        <h1 style='font-size: 2.8rem; margin-bottom: 8px; letter-spacing: -1px;'>Hokkaido</h1>
-        <p style='color:{COLORS['accent_deep']}; letter-spacing: 0.3em; font-size: 0.85rem; font-weight: 500;'>DECEMBER 2025</p> 
+    <div style='text-align:center; padding: 30px 0 20px;'>
+        <h1 style='font-family: "Shippori Mincho", serif; font-size: 2.5rem; margin-bottom: 8px; letter-spacing: 1px; font-weight: 500;'>Hokkaido</h1>
+        <p style='color:{COLORS['text_secondary']}; letter-spacing: 0.3em; font-size: 0.8rem; font-weight: 400;'>DECEMBER 2025</p>
+        <div style="width: 60px; height: 1px; background-color: {COLORS['line_light']}; margin: 20px auto;"></div>
     </div>
     """, unsafe_allow_html=True)
     
-    # VJW Card
+    # VJW Card: 仿照截圖，簡約白色長條按鈕，右側箭頭
     vjw_url = "https://vjw-lp.digital.go.jp/en/"
     st.markdown(f"""
     <style>
-    .vjw-card-modern {{
-        display: block; text-decoration: none;
-        background: linear-gradient(135deg, {COLORS['accent_warm']} 0%, {COLORS['accent_deep']} 100%); 
-        border-radius: 28px; padding: 20px 24px; margin-bottom: 24px;
-        box-shadow: 0 10px 30px rgba(166, 155, 141, 0.25);
-        transition: all 0.3s ease; position: relative; overflow: hidden; border: none;
+    .vjw-card-minimal {{
+        display: flex; align-items: center; justify-content: space-between;
+        text-decoration: none;
+        background: {COLORS['surface']}; 
+        border: 1px solid {COLORS['line_light']};
+        border-radius: 12px; padding: 16px 24px; margin-bottom: 24px;
+        transition: all 0.2s ease;
     }}
-    .vjw-card-modern:hover {{ transform: translateY(-3px); box-shadow: 0 15px 40px rgba(166, 155, 141, 0.35); }}
-    .vjw-content-m {{ display: flex; align-items: center; justify-content: space-between; color: white; }}
-    .vjw-icon-m {{ font-size: 24px; margin-right: 16px; background: rgba(255,255,255,0.25); width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 50%; backdrop-filter: blur(4px); }}
-    .vjw-text-m {{ flex-grow: 1; }}
-    .vjw-title-m {{ font-size: 18px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }}
-    .vjw-subtitle-m {{ font-size: 13px; opacity: 0.95; font-weight: 400; }}
-    .vjw-bg-pattern-m {{ position: absolute; top: -20%; right: 5%; font-size: 120px; opacity: 0.08; color: white; pointer-events: none; }}
+    .vjw-card-minimal:hover {{ border-color: {COLORS['accent_warm']}; }}
+    .vjw-content-min {{ display: flex; align-items: center; color: {COLORS['text_primary']}; }}
+    .vjw-icon-min {{ font-size: 20px; margin-right: 16px; color: {COLORS['text_secondary']}; }}
+    .vjw-title-min {{ font-size: 16px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 4px; font-family: 'Shippori Mincho', serif; }}
+    .vjw-subtitle-min {{ font-size: 12px; opacity: 0.8; font-weight: 400; color: {COLORS['text_secondary']}; }}
+    .vjw-arrow-min {{ font-size: 18px; opacity: 0.6; color: {COLORS['text_secondary']}; }}
     </style>
-    <a href="{vjw_url}" target="_blank" class="vjw-card-modern">
-        <div class="vjw-bg-pattern-m">🇯🇵</div>
-        <div class="vjw-content-m">
-            <div class="vjw-icon-m">✈️</div>
-            <div class="vjw-text-m"><div class="vjw-title-m">Visit Japan Web</div><div class="vjw-subtitle-m">入境審查 / 海關申報 / 免稅 QR</div></div>
-            <div>➜</div>
+    <a href="{vjw_url}" target="_blank" class="vjw-card-minimal">
+        <div class="vjw-content-min">
+            <div class="vjw-icon-min">✈️</div>
+            <div><div class="vjw-title-min">Visit Japan Web</div><div class="vjw-subtitle-min">入境日本必須申請</div></div>
         </div>
+        <div class="vjw-arrow-min">→</div>
     </a>
     """, unsafe_allow_html=True)
 
-    # Info Grid
+    # Info Grid: 仿照截圖，簡約線條框
     rate = get_exchange_rate()
-    temp, weather = get_weather(43.06, 141.35)
-    
+    temp1, weather1 = get_weather(43.06, 141.35) # Sapporo
+    temp2, weather2 = get_weather(42.80, 140.68) # Niseko (approx)
+
     st.markdown(f"""
-    <div class="info-grid-modern">
-        <div class="info-box-modern">
-            <div class="info-label-modern">JPY / TWD</div>
-            <div class="info-value-modern">{rate:.4f}</div>
-            <div style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin-top:4px;">匯率參考</div>
+    <div class="info-grid-minimal">
+        <div class="info-box-minimal">
+            <div class="info-label-minimal">EXCHANGE</div>
+            <div style="display: flex; align-items: baseline;">
+                <span style="font-size: 0.9rem; color: {COLORS['text_secondary']}; margin-right: 4px;">¥1000 ≈</span>
+                <div class="info-value-minimal">{int(rate*1000) if rate else '...'}</div>
+                <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-left: 4px;">TWD</span>
+            </div>
+            <div style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin-top:4px;">1 JPY = {rate:.3f}</div>
         </div>
-        <div class="info-box-modern">
-            <div class="info-label-modern">Sapporo Now</div>
-            <div class="info-value-modern">{temp}°<span style="font-size:1rem; margin-left:4px;">{weather}</span></div>
-            <div style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin-top:4px;">即時天氣</div>
+        <div class="info-box-minimal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div class="info-label-minimal" style="margin-bottom: 0;">WEATHER</div>
+                <div class="info-label-minimal" style="margin-bottom: 0; color: {COLORS['text_secondary']};">TODAY</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="font-family: 'Shippori Mincho', serif; font-size: 1rem;">Sapporo</div>
+                <div><span style="font-family: 'Shippori Mincho', serif; font-size: 1rem; font-weight: 500;">{temp1}°</span> <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; background: #F0EFEA; padding: 2px 6px; border-radius: 4px;">{weather1}</span></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-family: 'Shippori Mincho', serif; font-size: 1rem;">Niseko</div>
+                <div><span style="font-family: 'Shippori Mincho', serif; font-size: 1rem; font-weight: 500;">{temp2}°</span> <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; background: #F0EFEA; padding: 2px 6px; border-radius: 4px;">{weather2}</span></div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Flights Card
-    st.markdown(f'<div class="modern-card">', unsafe_allow_html=True)
-    st.markdown(f"<h3 style='font-size:1.1rem; margin-bottom:1.2rem; display:flex; align-items:center; gap:8px;'>✈️ Flights</h3>", unsafe_allow_html=True)
+    # Flights Card: 仿照截圖，簡約線條框
+    st.markdown(f'<div class="minimal-card">', unsafe_allow_html=True)
+    st.markdown(f"<h3 style='font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:8px; font-weight: 500;'>✈️ 航班 <span style='margin-left: auto; color: {COLORS['text_secondary']}; font-size: 1.2rem;'>•••</span></h3>", unsafe_allow_html=True)
     f1, f2 = st.columns(2)
     with f1:
-        st.caption("OUTBOUND (12/08)")
-        st.markdown(f"<div style='font-size:1.2rem; font-weight:700; color:{COLORS['text_primary']}'>12:30 <span style='color:{COLORS['accent_deep']}; font-size:1rem;'>TR892</span></div>", unsafe_allow_html=True)
-        st.write("")
-        if st.button("Ticket (W)", key="fw_w", use_container_width=True): ticket_modal("flight_wei", "機票 (W)")
+        st.markdown(f"<div style='text-align: center;'><div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 08</div><div style='font-size: 1.8rem; font-weight: 500; font-family: \"Shippori Mincho\", serif; color: {COLORS['text_primary']};'>12:30</div><div style='font-size: 0.9rem; color: {COLORS['text_secondary']};'>TR892</div></div>", unsafe_allow_html=True)
     with f2:
-        st.caption("INBOUND (12/12)")
-        st.markdown(f"<div style='font-size:1.2rem; font-weight:700; color:{COLORS['text_primary']}'>18:40 <span style='color:{COLORS['accent_deep']}; font-size:1rem;'>TR893</span></div>", unsafe_allow_html=True)
-        st.write("")
-        if st.button("Ticket (C)", key="fi_c", use_container_width=True): ticket_modal("flight_chien", "機票 (C)")
+        st.markdown(f"<div style='text-align: center; border-left: 1px solid {COLORS['line_light']};'><div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 12</div><div style='font-size: 1.8rem; font-weight: 500; font-family: \"Shippori Mincho\", serif; color: {COLORS['text_primary']};'>18:40</div><div style='font-size: 0.9rem; color: {COLORS['text_secondary']};'>TR893</div></div>", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # AI Button
     st.write("")
-    if st.button("✨ AI Travel Assistant", use_container_width=True, type="primary" if st.session_state.show_chat else "secondary"): 
+    if st.button("✨ AI Travel Assistant", use_container_width=True): 
         st.session_state.show_chat = not st.session_state.show_chat
     if st.session_state.show_chat: view_assistant()
-
-    # Emergency Card
-    st.markdown(f"""
-    <div style="margin-top: 2.5rem; padding: 1.8rem; background: #FAF7F5; border-radius: 24px; box-shadow: inset 0 0 0 1px rgba(176, 125, 98, 0.1);">
-        <div style="color:{COLORS['terracotta']}; font-weight:700; font-size:0.9rem; margin-bottom:0.8rem; display:flex; align-items:center; gap:6px;">🆘 EMERGENCY CONTACTS</div>
-        <div style="display:flex; gap:1.5rem; font-size:0.85rem; color:{COLORS['text_primary']}; font-weight:600;">
-            <span>🇯🇵 110 Police</span> <span>🚑 119 Ambulance</span>
-        </div>
-        <div style="margin-top:16px; padding:14px; background:white; border-radius: 16px; box-shadow: 0 4px 12px {COLORS['shadow_warm']}; display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-size:0.8rem; color:{COLORS['text_secondary']}; font-weight:500;">札幌辦事處 (緊急聯絡)</div>
-            <div style="font-weight:700; color:{COLORS['text_primary']}; font-size:1rem;">080-1460-2568</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
 def view_day(day_id):
     day = APP_DATA['days'][day_id]
     
-    # Weather Data
+    # Weather
     lat = day['coords']['lat']
     lon = day['coords']['lon']
     temp, w_text = get_weather(lat, lon) 
 
-    weather_icon = "🌥️"
-    if "晴" in w_text: weather_icon = "☀️"
-    elif "雨" in w_text: weather_icon = "🌧️"
-    elif "雪" in w_text: weather_icon = "❄️"
-
-    # --- 修正處：移除縮排，確保 HTML 正確渲染 ---
+    # Header: 仿照截圖風格，大號日期，定位，膠囊天氣
     weather_html = f"""
-<div style="text-align:center; margin-bottom: 2rem; padding-top: 20px;">
-    <h2 style="font-size: 3rem; margin:0 0 8px 0; color:{COLORS['text_primary']}; letter-spacing:-1px;">{day['date'].split(' ')[0]}</h2>
-    <div style="color:{COLORS['accent_deep']}; font-size:0.95rem; letter-spacing:0.2em; text-transform:uppercase; margin-bottom: 20px; font-weight:600;">{day['location']}</div>
+<div style="text-align:center; margin-bottom: 2rem; padding-top: 10px;">
+    <h2 style="font-family: 'Shippori Mincho', serif; font-size: 3rem; margin:0 0 4px 0; color:{COLORS['text_primary']}; letter-spacing: 1px; font-weight: 500;">{day['date'].split(' ')[0]}</h2>
+    <div style="color:{COLORS['text_secondary']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 6px;"><span style="font-size: 1rem;">📍</span> {day['location']}</div>
     
-    <div style="display: inline-flex; align-items: center; gap: 16px; background: {COLORS['surface']}; padding: 12px 28px; border-radius: 50px; box-shadow: 0 8px 20px {COLORS['shadow_warm']};">
-            <span style="font-size: 2.2rem; line-height: 1;">{weather_icon}</span>
-            <div style="text-align: left; line-height: 1.1;">
-                <div style="font-size: 1.4rem; font-weight: 700; color: {COLORS['text_primary']}; font-family: 'Montserrat', sans-serif;">{temp}° <span style="font-size:1rem;">{w_text}</span></div>
-                <div style="font-size: 0.65rem; color: {COLORS['accent_deep']}; font-weight: 600; letter-spacing: 1px; margin-top:2px;">LIVE FORECAST</div>
-            </div>
+    <div style="display: inline-flex; align-items: center; gap: 8px; background: {COLORS['surface']}; padding: 6px 16px; border-radius: 20px; border: 1px solid {COLORS['line_light']};">
+            <span style="font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 500; color: {COLORS['text_primary']}">{temp}°</span>
+            <span style="font-size: 0.9rem; color: {COLORS['text_secondary']}; border-left: 1px solid {COLORS['line_light']}; padding-left: 8px;">{w_text}</span>
     </div>
 </div>
 """
     st.markdown(weather_html, unsafe_allow_html=True)
 
-    # Hotel Card
+    # Hotel Card: 仿照截圖，簡約線條框，右側圖標
     st.markdown(f"""
-    <div class="modern-card" style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-            <div style="font-size:0.75rem; font-weight:600; color:{COLORS['accent_deep']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">Accommodation</div>
-            <div style="font-weight:700; font-size:1.2rem; margin-bottom:4px;">{day['hotel']}</div>
-            <div style="font-size:0.85rem; color:{COLORS['text_secondary']}; font-weight:500;">{day['hotel_note']}</div>
+            <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">ACCOMMODATION</div>
+            <div style="font-weight:500; font-size:1.2rem; margin-bottom:4px; font-family: 'Shippori Mincho', serif;">{day['hotel']}</div>
+            <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{day['hotel_note']}</div>
         </div>
-        <div style="font-size:1.8rem; color:{COLORS['accent_warm']}; opacity:0.8; background:{COLORS['bg_main']}; width:50px; height:50px; display:flex; align-items:center; justify-content:center; border-radius:50%;">🛏️</div>
+        <div style="font-size:1.8rem; color:{COLORS['line_light']};">🛏️</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Timeline
+    # Timeline: 仿照截圖風格，垂直線和圓點
     for i, act in enumerate(day['activities']):
+        # Timeline Point and Line
         st.markdown(f"""
-        <div style="display:flex; align-items:baseline; gap:12px; margin-top:1.8rem; margin-bottom:0.8rem;">
-            <span style="font-family:'Montserrat', monospace; font-size:0.9rem; font-weight:600; color:{COLORS['accent_deep']}">{act['time']}</span>
-            <span style="font-weight:700; font-size:1.1rem; color:{COLORS['text_primary']}">{act['text']}</span>
+        <div style="position: relative; padding-left: 24px; margin-bottom: 1.5rem;">
+            <div class="timeline-point" style="position: absolute; left: 0; top: 6px;"></div>
+            {f'<div class="timeline-line"></div>' if i < len(day['activities']) - 1 else ''}
+            <div style="font-family:'Shippori Mincho', serif; font-size:0.9rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom: 8px;">{act['time']}</div>
+            <div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center; padding: 1.2rem;">
+                <div>
+                    <div style="font-weight:500; font-size:1.1rem; color:{COLORS['text_primary']}; font-family: 'Shippori Mincho', serif; margin-bottom: 4px;">{act['text']}</div>
+                    <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{act['desc']}</div>
+                </div>
+                <div style="font-size:1.5rem; color:{COLORS['line_light']};">{ '🍴' if act['type'] == 'food' else '🚆' if act['type'] == 'transport' else '📍' }</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
-        with st.expander(f"查看詳情 / {act['desc']}"):
-            # Guide Note
+        # Expander Content (保持簡約)
+        with st.expander(f"查看詳情"):
             if 'guideText' in act:
                 st.markdown(f"""
-                <div style="background:{COLORS['bg_main']}; padding:16px; border-radius:16px; margin-bottom:16px; box-shadow: inset 0 2px 6px {COLORS['shadow_warm']};">
-                    <strong style="color:{COLORS['accent_deep']}; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:8px;">💡 Guide Note</strong>
-                    <p style="font-size:0.95rem; line-height:1.7; color:{COLORS['text_primary']}; white-space: pre-wrap; margin:0;">{act['guideText']}</p>
+                <div style="padding:12px; border-radius:8px; margin-bottom:12px; background: #F0EFEA;">
+                    <strong style="color:{COLORS['accent_deep']}; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:4px;">💡 Note</strong>
+                    <p style="font-size:0.9rem; line-height:1.6; color:{COLORS['text_primary']}; margin:0;">{act['guideText']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
             if act['type'] == 'food' and 'menu' in act:
                 st.markdown(f"<div style='font-size:0.85rem; font-weight:600; color:{COLORS['accent_deep']}; margin-bottom:8px;'>RECOMMENDED</div>", unsafe_allow_html=True)
-                for m in act['menu']: st.markdown(f"<div style='margin-bottom:4px; color:{COLORS['text_primary']}; font-weight:500;'>• {m}</div>", unsafe_allow_html=True)
+                for m in act['menu']: st.markdown(f"<div style='margin-bottom:4px; color:{COLORS['text_primary']};'>• {m}</div>", unsafe_allow_html=True)
             
             st.write("")
 
@@ -504,7 +509,7 @@ def view_day(day_id):
                         if st.button("🎫 Ticket (C)", key=f"t_{day_id}_{i}_c", use_container_width=True): ticket_modal(f"t_{day_id}_{i}_c", f"Ticket (C) - {act['text']}")
 
 def view_packing():
-    st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem;'>Packing List</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
     
     total = sum(len(c['items']) for c in APP_DATA['packing'])
     checked = sum(1 for k, v in st.session_state.packing.items() if v)
@@ -518,8 +523,8 @@ def view_packing():
     
     for cat in APP_DATA['packing']:
         with st.container():
-            st.markdown(f"<div class='modern-card' style='padding: 1.2rem;'>", unsafe_allow_html=True)
-            st.markdown(f"<h4 style='margin-bottom:1rem; color:{COLORS['accent_deep']};'>{cat['category']}</h4>", unsafe_allow_html=True)
+            st.markdown(f"<div class='minimal-card' style='padding: 1.2rem;'>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin-bottom:1rem; color:{COLORS['text_primary']}; font-family: \"Shippori Mincho\", serif;'>{cat['category']}</h4>", unsafe_allow_html=True)
             for item in cat['items']:
                 key = f"pack_{item}"
                 val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
@@ -529,9 +534,8 @@ def view_packing():
 def view_assistant():
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     st.markdown(f"""<style>
-        .stChatMessage {{ background: {COLORS['surface']}; border-radius: 20px; box-shadow: 0 4px 12px {COLORS['shadow_warm']}; border: none; padding: 1rem; }}
-        .stChatMessage[data-testid="user-message"] {{ background: {COLORS['accent_warm']}; color: white; }}
-        .stChatInput textarea {{ border-radius: 20px; border: 1px solid {COLORS['accent_warm']}50; }}
+        .stChatMessage {{ background: {COLORS['surface']}; border-radius: 12px; border: 1px solid {COLORS['line_light']}; padding: 1rem; }}
+        .stChatMessage[data-testid="user-message"] {{ background: {COLORS['bg_main']}; }}
     </style>""", unsafe_allow_html=True)
 
     for msg in st.session_state.chat_history:
@@ -545,18 +549,34 @@ def view_assistant():
                 st.write(response)
         st.session_state.chat_history.append({"role": "model", "text": response})
 
-# --- 6. 頂部導覽列 ---
+# --- 6. 頂部導覽列 (仿照截圖風格) ---
 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 nav_cols = st.columns([1.2, 1, 1, 1, 1, 1, 1.2])
-nav_items = [("🏠 Home", "overview"), ("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4), ("🎒 List", "packing")]
+nav_items = [("🏠", "overview"), ("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4), ("🎒", "packing")]
 
 st.markdown(f"""<style>
 div[data-testid="column"] button {{
-    border-radius: 40px !important;
+    border-radius: 20px !important;
     padding: 6px 12px !important;
-    font-size: 0.85rem !important;
-    box-shadow: 0 4px 10px {COLORS['shadow_warm']} !important;
+    font-size: 0.9rem !important;
     border: none !important;
+    background-color: transparent !important;
+    color: {COLORS['text_secondary']} !important;
+    font-family: 'Shippori Mincho', serif !important;
+}}
+div[data-testid="column"] button:hover {{
+    color: {COLORS['text_primary']} !important;
+}}
+div[data-testid="column"] button[kind="primary"] {{
+    background-color: {COLORS['accent_deep']} !important;
+    color: white !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }}
 </style>""", unsafe_allow_html=True)
 
