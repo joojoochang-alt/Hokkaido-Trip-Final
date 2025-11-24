@@ -1,12 +1,11 @@
 import streamlit as st
 import requests
 import datetime
-import google.generativeai as genai
 import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Pure Minimalist Style) ---
+# --- 1. 設定頁面與 CSS (Muji Minimalist Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # Muji 風格配色與樣式定義
@@ -17,7 +16,7 @@ COLORS = {
     'text_secondary': '#A09B96',# 淺灰輔助文字
     'accent_warm': '#C7B299',   # 燕麥色
     'accent_deep': '#8C8376',   # 深卡其
-    'line_light': '#EAE8E4',    # 極細淺灰線 (用於邊框，不當作底線)
+    'line_light': '#EAE8E4',    # 極細淺灰線 (底線用)
     'alert_red': '#B94047',     # 警示紅
 }
 
@@ -50,7 +49,7 @@ st.markdown(f"""
         margin-bottom: 1.2rem;
     }}
     
-    /* 修正 3: 按鈕樣式調整 (純白反白) */
+    /* 按鈕樣式調整 */
     .stButton button {{
         background-color: transparent;
         border: 1px solid {COLORS['line_light']} !important;
@@ -62,16 +61,14 @@ st.markdown(f"""
         transition: all 0.2s ease;
         font-family: 'Shippori Mincho', serif;
     }}
-    /* Hover 狀態 - 純白 */
     .stButton button:hover {{
-        background-color: #FFFFFF !important; /* 純白 */
+        background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
         border-color: {COLORS['accent_warm']} !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 輕微浮起 */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }}
-    /* 選中/Primary 狀態 - 純白 */
     .stButton button[kind="primary"] {{
-        background-color: #FFFFFF !important; /* 純白 */
+        background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
         border: 1px solid {COLORS['accent_deep']} !important;
         font-weight: 600;
@@ -98,8 +95,9 @@ st.markdown(f"""
         text-transform: uppercase;
         letter-spacing: 0.1em;
         margin-bottom: 8px;
-        /* 移除底線 */
-        border-bottom: none; 
+        /* 復原底線 */
+        border-bottom: 1px solid {COLORS['line_light']};
+        padding-bottom: 4px;
     }}
     .info-value-minimal {{
         font-family: 'Shippori Mincho', serif;
@@ -107,6 +105,7 @@ st.markdown(f"""
         font-weight: 500;
         color: {COLORS['text_primary']};
         line-height: 1.1;
+        margin-top: 8px;
     }}
 
     /* Expander 優化 */
@@ -132,28 +131,31 @@ st.markdown(f"""
         padding: 24px;
         background: #F8F7F3;
     }}
-    /* 移除虛線分割線 */
+    /* 復原虛線 */
     .pass-dashed-line {{
-        display: none; 
+        width: 90%;
+        border-top: 1px dashed {COLORS['line_light']};
     }}
-    /* 調整缺口位置 */
     .pass-notch-container {{
-        height: 10px; /* 縮小高度因為沒有線了 */
+        height: 20px;
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: #FFFFFF;
     }}
     .pass-notch-left, .pass-notch-right {{
-        width: 16px;
-        height: 16px;
+        width: 20px;
+        height: 20px;
         background-color: {COLORS['bg_main']};
         border-radius: 50%;
         position: absolute;
-        top: -8px;
+        top: 0;
         z-index: 10;
         border: 1px solid {COLORS['line_light']};
     }}
-    .pass-notch-left {{ left: -10px; }}
-    .pass-notch-right {{ right: -10px; }}
+    .pass-notch-left {{ left: -10px; border-right: none; }}
+    .pass-notch-right {{ right: -10px; border-left: none; }}
 
     /* 時間軸樣式 */
     .timeline-point {{
@@ -178,13 +180,11 @@ st.markdown(f"""
 if 'view' not in st.session_state: st.session_state.view = 'overview'
 if 'tickets' not in st.session_state: st.session_state.tickets = {}
 if 'packing' not in st.session_state: st.session_state.packing = {}
-if 'chat_history' not in st.session_state: st.session_state.chat_history = []
-if 'show_chat' not in st.session_state: st.session_state.show_chat = False
 
 APP_DATA = {
   "flight": { 
-    "outbound": { "code": "TR892", "time": "12:30 - 17:20" }, 
-    "inbound": { "code": "TR893", "time": "18:40 - 22:15" } 
+    "outbound": { "code": "TR892", "time": "12:30", "arrival": "17:20" }, 
+    "inbound": { "code": "TR893", "time": "18:40", "arrival": "22:15" } 
   },
   "days": [
     { 
@@ -272,22 +272,6 @@ def get_exchange_rate():
     except:
         return 0.215
 
-def chat_with_gemini(user_input):
-    api_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
-        return "目前為離線模式，請設定 API Key 以啟用 AI 功能。"
-    try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        system_prompt = f"You are a helpful travel assistant for a Hokkaido trip. Keep answers short."
-        history = st.session_state.chat_history.copy()
-        formatted_history = [{"role": "user" if m["role"] == "user" else "model", "parts": [m["text"]]} for m in history]
-        chat = model.start_chat(history=formatted_history)
-        response = chat.send_message(system_prompt + "\nUser: " + user_input)
-        return response.text
-    except Exception as e:
-        return f"AI 連線錯誤: {str(e)}"
-
 # --- 4. 票券視窗 ---
 @st.dialog("Digital Voucher")
 def ticket_modal(ticket_key, title):
@@ -313,6 +297,7 @@ def ticket_modal(ticket_key, title):
             </div>
             <div class="pass-notch-container">
                 <div class="pass-notch-left"></div>
+                <div class="pass-dashed-line"></div>
                 <div class="pass-notch-right"></div>
             </div>
             <div style="padding: 20px; text-align: center; background: #FAFAFA;">
@@ -323,9 +308,8 @@ def ticket_modal(ticket_key, title):
         </div>
         """, unsafe_allow_html=True)
         
-        # 修正 4: 顯示上傳的票券圖片
         if existing.get('image'):
-            st.image(existing['image'], caption="E-Ticket", use_container_width=True)
+            st.image(existing['image'], caption="E-Ticket / Booking Confirmation", use_container_width=True)
 
         if existing.get('url'): st.link_button("🔗 OPEN LINK", existing['url'], use_container_width=True)
         
@@ -339,13 +323,10 @@ def ticket_modal(ticket_key, title):
         new_url = st.text_input("Link URL", value=existing.get("url", ""))
         new_note = st.text_area("Notes", value=existing.get("note", ""))
         
-        # 修正 4: 新增圖片上傳功能
         new_image = st.file_uploader("Upload Ticket Image", type=['png', 'jpg', 'jpeg'])
         
         if st.button("Save Changes", type="primary", use_container_width=True):
-            # 如果有新圖片就更新，沒有則保留舊圖片 (如果有)
             final_image = new_image if new_image else existing.get('image')
-            
             st.session_state.tickets[ticket_key] = {
                 "orderNumber": new_order, 
                 "url": new_url, 
@@ -358,21 +339,22 @@ def ticket_modal(ticket_key, title):
 # --- 5. 頁面視圖 ---
 
 def view_overview():
-    # Header
+    # Header (復原分隔線)
     st.markdown(f"""
     <div style='text-align:center; padding: 30px 0 20px;'>
         <h1 style='font-family: "Shippori Mincho", serif; font-size: 2.5rem; margin-bottom: 8px; letter-spacing: 1px; font-weight: 500;'>Hokkaido</h1>
         <p style='color:{COLORS['text_secondary']}; letter-spacing: 0.3em; font-size: 0.8rem; font-weight: 400;'>DECEMBER 2025</p>
-        </div>
+        <div style="width: 60px; height: 1px; background-color: {COLORS['line_light']}; margin: 20px auto;"></div>
+    </div>
     """, unsafe_allow_html=True)
     
-    # VJW Card
+    # VJW Card (確保無底線文字)
     vjw_url = "https://vjw-lp.digital.go.jp/en/"
     st.markdown(f"""
     <style>
     .vjw-card-minimal {{
         display: flex; align-items: center; justify-content: space-between;
-        text-decoration: none;
+        text-decoration: none !important; /* 強制無底線 */
         background: {COLORS['surface']}; 
         border: 1px solid {COLORS['line_light']};
         border-radius: 12px; padding: 16px 24px; margin-bottom: 24px;
@@ -381,8 +363,8 @@ def view_overview():
     .vjw-card-minimal:hover {{ border-color: {COLORS['accent_warm']}; }}
     .vjw-content-min {{ display: flex; align-items: center; color: {COLORS['text_primary']}; }}
     .vjw-icon-min {{ font-size: 20px; margin-right: 16px; color: {COLORS['text_secondary']}; }}
-    .vjw-title-min {{ font-size: 16px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 4px; font-family: 'Shippori Mincho', serif; }}
-    .vjw-subtitle-min {{ font-size: 12px; opacity: 0.8; font-weight: 400; color: {COLORS['text_secondary']}; }}
+    .vjw-title-min {{ font-size: 16px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 4px; font-family: 'Shippori Mincho', serif; text-decoration: none; }}
+    .vjw-subtitle-min {{ font-size: 12px; opacity: 0.8; font-weight: 400; color: {COLORS['text_secondary']}; text-decoration: none; }}
     .vjw-arrow-min {{ font-size: 18px; opacity: 0.6; color: {COLORS['text_secondary']}; }}
     </style>
     <a href="{vjw_url}" target="_blank" class="vjw-card-minimal">
@@ -412,8 +394,8 @@ def view_overview():
         </div>
         <div class="info-box-minimal">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div class="info-label-minimal" style="margin-bottom: 0;">WEATHER</div>
-                <div class="info-label-minimal" style="margin-bottom: 0; color: {COLORS['text_secondary']};">TODAY</div>
+                <div class="info-label-minimal" style="margin-bottom: 0; border-bottom: none;">WEATHER</div>
+                <div class="info-label-minimal" style="margin-bottom: 0; color: {COLORS['text_secondary']}; border-bottom: none;">TODAY</div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <div style="font-family: 'Shippori Mincho', serif; font-size: 1rem;">Sapporo</div>
@@ -427,26 +409,46 @@ def view_overview():
     </div>
     """, unsafe_allow_html=True)
 
-    # Flights Card
+    # Flights Card (更新落地時間)
     st.markdown(f'<div class="minimal-card">', unsafe_allow_html=True)
     st.markdown(f"<h3 style='font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:8px; font-weight: 500;'>✈️ 航班 <span style='margin-left: auto; color: {COLORS['text_secondary']}; font-size: 1.2rem;'>•••</span></h3>", unsafe_allow_html=True)
+    
     f1, f2 = st.columns(2)
+    
+    # Outbound
     with f1:
-        st.markdown(f"<div style='text-align: center;'><div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 08</div><div style='font-size: 1.8rem; font-weight: 500; font-family: \"Shippori Mincho\", serif; color: {COLORS['text_primary']};'>12:30</div><div style='font-size: 0.9rem; color: {COLORS['text_secondary']};'>TR892</div></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style='text-align: center;'>
+            <div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 08</div>
+            <div style='font-size: 1.4rem; font-weight: 500; font-family: "Shippori Mincho", serif; color: {COLORS['text_primary']};'>
+                {APP_DATA['flight']['outbound']['time']} <span style='font-size:1rem; color:{COLORS['text_secondary']};'>➝</span> {APP_DATA['flight']['outbound']['arrival']}
+            </div>
+            <div style='font-size: 0.9rem; color: {COLORS['text_secondary']}; margin-top:4px;'>{APP_DATA['flight']['outbound']['code']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write("")
+        if st.button("Booking Info", key="fw_w", use_container_width=True): ticket_modal("flight_wei", "Flight (Outbound)")
+
+    # Inbound
     with f2:
-        st.markdown(f"<div style='text-align: center; border-left: 1px solid {COLORS['line_light']};'><div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 12</div><div style='font-size: 1.8rem; font-weight: 500; font-family: \"Shippori Mincho\", serif; color: {COLORS['text_primary']};'>18:40</div><div style='font-size: 0.9rem; color: {COLORS['text_secondary']};'>TR893</div></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style='text-align: center; border-left: 1px solid {COLORS['line_light']};'>
+            <div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 12</div>
+            <div style='font-size: 1.4rem; font-weight: 500; font-family: "Shippori Mincho", serif; color: {COLORS['text_primary']};'>
+                {APP_DATA['flight']['inbound']['time']} <span style='font-size:1rem; color:{COLORS['text_secondary']};'>➝</span> {APP_DATA['flight']['inbound']['arrival']}
+            </div>
+            <div style='font-size: 0.9rem; color: {COLORS['text_secondary']}; margin-top:4px;'>{APP_DATA['flight']['inbound']['code']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write("")
+        if st.button("Booking Info", key="fi_c", use_container_width=True): ticket_modal("flight_chien", "Flight (Inbound)")
+        
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # AI Button
-    st.write("")
-    if st.button("✨ AI Travel Assistant", use_container_width=True): 
-        st.session_state.show_chat = not st.session_state.show_chat
-    if st.session_state.show_chat: view_assistant()
-
-    # Emergency Card
+    # Emergency Card (總覽頁最下方)
     st.markdown(f"""
     <div class="minimal-card" style="border-color: {COLORS['line_light']}; background: {COLORS['surface']}; margin-top: 30px;">
-        <div style="font-size: 0.7rem; font-weight: 600; color: {COLORS['alert_red']}; letter-spacing: 0.1em; margin-bottom: 12px;">緊急求助 / EMERGENCY</div>
+        <div style="font-size: 0.7rem; font-weight: 600; color: {COLORS['alert_red']}; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 8px;">緊急求助 / EMERGENCY</div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
              <div style="text-align: center; width: 48%;">
                  <div style="font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 500; color: {COLORS['text_primary']};">110</div>
@@ -472,7 +474,7 @@ def view_day(day_id):
     lon = day['coords']['lon']
     temp, w_text = get_weather(lat, lon) 
 
-    # Header (修正 1: HTML 靠左對齊，確保渲染)
+    # Header
     weather_html = f"""
 <div style="text-align:center; margin-bottom: 2rem; padding-top: 10px;">
 <h2 style="font-family: 'Shippori Mincho', serif; font-size: 3rem; margin:0 0 4px 0; color:{COLORS['text_primary']}; letter-spacing: 1px; font-weight: 500;">{day['date'].split(' ')[0]}</h2>
@@ -485,17 +487,23 @@ def view_day(day_id):
 """
     st.markdown(weather_html, unsafe_allow_html=True)
 
-    # Hotel Card
+    # Hotel Card (新增 Booking Info 按鈕)
     st.markdown(f"""
-    <div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
         <div>
-            <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">ACCOMMODATION</div>
+            <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 2px; display: inline-block;">ACCOMMODATION</div>
             <div style="font-weight:500; font-size:1.2rem; margin-bottom:4px; font-family: 'Shippori Mincho', serif;">{day['hotel']}</div>
             <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{day['hotel_note']}</div>
         </div>
         <div style="font-size:1.8rem; color:{COLORS['line_light']};">🛏️</div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # 按鈕區塊
+    if st.button("Booking Info / 訂單資料", key=f"hotel_btn_{day_id}", use_container_width=True):
+        ticket_modal(f"hotel_{day_id}", f"Hotel: {day['hotel']}")
+    
+    st.write("")
 
     # Timeline
     for i, act in enumerate(day['activities']):
@@ -524,7 +532,6 @@ def view_day(day_id):
                 </div>
                 """, unsafe_allow_html=True)
 
-            # 修正 2: 將推薦菜單獨立區隔
             if act['type'] == 'food' and 'menu' in act:
                 st.markdown(f"""
                 <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: #FFFFFF; border: 1px solid {COLORS['line_light']};">
@@ -582,24 +589,6 @@ def view_packing():
                 st.session_state.packing[key] = val
             st.markdown("</div>", unsafe_allow_html=True)
 
-def view_assistant():
-    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
-    st.markdown(f"""<style>
-        .stChatMessage {{ background: {COLORS['surface']}; border-radius: 12px; border: 1px solid {COLORS['line_light']}; padding: 1rem; }}
-        .stChatMessage[data-testid="user-message"] {{ background: {COLORS['bg_main']}; }}
-    </style>""", unsafe_allow_html=True)
-
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]): st.write(msg["text"])  
-    if prompt := st.chat_input("Ask me about your trip..."):
-        st.session_state.chat_history.append({"role": "user", "text": prompt})
-        with st.chat_message("user"): st.write(prompt)
-        with st.chat_message("model"):
-            with st.spinner("Thinking..."):
-                response = chat_with_gemini(prompt)
-                st.write(response)
-        st.session_state.chat_history.append({"role": "model", "text": response})
-
 # --- 6. 頂部導覽列 ---
 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 nav_cols = st.columns([1.2, 1, 1, 1, 1, 1, 1.2])
@@ -617,10 +606,10 @@ div[data-testid="column"] button {{
 }}
 div[data-testid="column"] button:hover {{
     color: {COLORS['text_primary']} !important;
-    background-color: #FFFFFF !important; /* 純白 */
+    background-color: #FFFFFF !important;
 }}
 div[data-testid="column"] button[kind="primary"] {{
-    background-color: #FFFFFF !important; /* 純白 */
+    background-color: #FFFFFF !important;
     color: {COLORS['text_primary']} !important;
     border: 1px solid {COLORS['accent_warm']} !important;
     border-radius: 50% !important;
