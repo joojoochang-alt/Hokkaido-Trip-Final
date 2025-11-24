@@ -5,7 +5,7 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Precise Layout) ---
+# --- 1. 設定頁面與 CSS (Mobile Packing List Fix) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
@@ -44,17 +44,37 @@ st.markdown(f"""
         color: {COLORS['text_primary']} !important;
     }}
     
-    h1, h2, h3, h4, h5, h6, p, div, span, label {{
+    h1, h2, h3, h4, h5, h6, p, div, span, label, li {{
         color: {COLORS['text_primary']} !important;
     }}
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
     /* -----------------------------------------
-       導覽列樣式 (強力縮小版)
+       Checkbox 樣式修正 (去黑 / 去紅 / 改金)
        ----------------------------------------- */
     
-    /* 電腦版預設 */
+    /* 1. 針對 Checkbox 的外框 (span) */
+    div[data-testid="stCheckbox"] label span[data-baseweb="checkbox"] {{
+        background-color: #FFFFFF !important; /* 強制白底 (未勾選) */
+        border-color: {COLORS['line_light']} !important; /* 淺灰框 */
+    }}
+    
+    /* 2. 針對已勾選狀態 (Checked) */
+    div[data-testid="stCheckbox"] label[aria-checked="true"] span[data-baseweb="checkbox"] {{
+        background-color: {COLORS['warm_gold']} !important; /* 金色底 */
+        border-color: {COLORS['warm_gold']} !important;
+    }}
+    
+    /* 3. 針對勾選後的打勾符號 (SVG) */
+    div[data-testid="stCheckbox"] label[aria-checked="true"] span[data-baseweb="checkbox"] div {{
+        color: #FFFFFF !important; /* 白勾 */
+    }}
+
+    /* -----------------------------------------
+       導覽列樣式 (橫向 + 縮小)
+       ----------------------------------------- */
+    
     div[data-testid="column"] button {{
         background-color: {COLORS['nav_bg_inactive']} !important;
         border: none !important;
@@ -71,45 +91,35 @@ st.markdown(f"""
         transition: all 0.2s ease !important;
     }}
 
-    /* ★★★ 手機版導覽列強制修正 (Force Narrow Layout) ★★★ */
     @media (max-width: 640px) {{
-        /* 強制容器橫向且緊湊 */
         div[data-testid="stHorizontalBlock"] {{
             gap: 4px !important; 
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             justify-content: center !important;
         }}
-        
-        /* 強制欄位縮小，不允許擴張 */
         div[data-testid="column"] {{
-            flex: 0 0 auto !important; /* 關鍵：禁止自動伸縮 */
+            flex: 0 0 auto !important;
             width: auto !important;
-            min-width: 0 !important;   /* 關鍵：允許縮到比預設更小 */
+            min-width: 0 !important;
             padding: 0 2px !important;
         }}
-
-        /* 按鈕本體縮小 */
         div[data-testid="column"] button {{
             width: 34px !important;
             height: 34px !important;
             font-size: 0.8rem !important;
         }}
-        
-        /* 首頁和清單圖示稍微大一點 */
         div[data-testid="column"] button:contains("🏠"), 
         div[data-testid="column"] button:contains("🎒") {{
             font-size: 1.1rem !important;
         }}
     }}
 
-    /* 懸停 (Hover) */
     div[data-testid="column"] button:hover {{
         background-color: {COLORS['linen_mist']} !important;
         color: {COLORS['text_primary']} !important;
         transform: translateY(-1px);
     }}
-    /* 選中 (Active) */
     div[data-testid="column"] button[kind="primary"] {{
         background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
@@ -122,7 +132,6 @@ st.markdown(f"""
        通用元件樣式
        ----------------------------------------- */
 
-    /* 簡約日式卡片 */
     .minimal-card {{
         background: {COLORS['surface']};
         border: 1px solid {COLORS['line_light']};
@@ -131,14 +140,12 @@ st.markdown(f"""
         margin-bottom: 1.2rem;
     }}
 
-    /* 住宿卡片容器 */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         border-color: {COLORS['line_light']} !important;
         border-radius: 16px !important;
         background-color: {COLORS['surface']} !important;
     }}
     
-    /* 一般按鈕 (非導覽列) */
     .stButton button {{
         height: auto !important;
         padding: 8px 20px !important;
@@ -154,7 +161,7 @@ st.markdown(f"""
         box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15);
     }}
 
-    /* ★★★ Google Map 連結樣式 (白底深字) ★★★ */
+    /* Google Map Link */
     a[href*="maps.google.com"] {{
         display: flex;
         align-items: center;
@@ -210,13 +217,13 @@ st.markdown(f"""
         color: {COLORS['text_secondary']} !important;
     }}
 
-    /* Info Grid Boxes (重寫樣式) */
+    /* Info Grid Boxes */
     .info-box-content {{
         background: {COLORS['surface']};
         border-radius: 16px;
         padding: 15px;
         border: 1px solid {COLORS['line_light']};
-        height: 120px; /* 固定高度確保對齊 */
+        height: 120px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -297,13 +304,21 @@ st.markdown(f"""
         background-color: {COLORS['line_light']};
     }}
     
-    /* 刪除按鈕 */
+    /* 刪除按鈕樣式 */
     .delete-btn button {{
         border: none !important;
         color: #E57373 !important;
-        padding: 0px 8px !important;
-        font-size: 0.8rem !important;
+        padding: 0px !important;
+        width: 100% !important;
+        height: auto !important;
+        font-size: 1rem !important;
         background: transparent !important;
+        box-shadow: none !important;
+    }}
+    .delete-btn button:hover {{
+        color: #D32F2F !important;
+        background: transparent !important;
+        box-shadow: none !important;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -323,7 +338,7 @@ DEFAULT_PACKING = [
 if 'packing_list' not in st.session_state:
     st.session_state.packing_list = DEFAULT_PACKING
 
-# ★★★ Google Maps 連結 (全部確保為真實搜尋連結) ★★★
+# ★★★ Google Maps 連結 ★★★
 APP_DATA = {
   "flight": { 
     "outbound": { "code": "TR892", "time": "12:30", "arrival": "17:20" }, 
@@ -490,6 +505,7 @@ nav_items = [
 
 for i, (label, view_name) in enumerate(nav_items):
     is_active = st.session_state.view == view_name
+    # 觸發 primary 樣式 (白色背景 + 金邊)
     if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
         st.session_state.view = view_name
         st.rerun()
@@ -537,7 +553,7 @@ def view_overview():
     </a>
     """, unsafe_allow_html=True)
 
-    # Info Grid (使用 st.columns 確保排版)
+    # Info Grid
     rate = get_exchange_rate()
     temp1, weather1 = get_weather(43.06, 141.35) # Sapporo
     temp2, weather2 = get_weather(42.80, 140.68) # Niseko
@@ -706,6 +722,7 @@ def view_day(day_id):
                 """, unsafe_allow_html=True)
 
             if act['type'] == 'food' and 'menu' in act:
+                # 白色背景
                 st.markdown(f"""
                 <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: #FFFFFF; border: 1px solid {COLORS['line_light']};">
                     <div style="font-size:0.75rem; font-weight:600; color:{COLORS['accent_warm']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
@@ -741,34 +758,34 @@ def view_day(day_id):
 def view_packing():
     st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
     
-    total = sum(len(cat['items']) for cat in st.session_state.packing_list)
-    checked = sum(1 for k, v in st.session_state.packing.items() if v)
+    total_items = sum(len(cat['items']) for cat in st.session_state.packing_list)
+    checked_items = sum(1 for k, v in st.session_state.packing.items() if v)
     
     st.markdown(f"""<style>
         .stProgress > div > div > div > div {{ background-color: {COLORS['warm_gold']}; }}
     </style>""", unsafe_allow_html=True)
-    st.progress(checked / total if total > 0 else 0)
+    st.progress(checked_items / total_items if total_items > 0 else 0)
     
     st.write("")
     
+    # 顯示清單 (含刪除功能)
     for i, cat in enumerate(st.session_state.packing_list[:]):
-        with st.container():
+        with st.container(border=True):
             col_title, col_del_cat = st.columns([8, 1])
             with col_title:
-                st.markdown(f"""
-                <div style="padding: 1.2rem 1.2rem 0.5rem 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-bottom:none; border-top-left-radius: 12px; border-top-right-radius: 12px;">
-                    <h4 style='margin:0; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif;'>{cat['category']}</h4>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"""<h4 style='margin:0; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif;'>{cat['category']}</h4>""", unsafe_allow_html=True)
             with col_del_cat:
+                # 這裡用空的 container 佔位調整排版，或直接放按鈕
+                st.markdown('<div style="height: 5px;"></div>', unsafe_allow_html=True)
                 if st.button("🗑️", key=f"del_cat_{i}", help="Delete Category"):
                     st.session_state.packing_list.pop(i)
                     st.rerun()
 
-            st.markdown(f"""<div style="padding: 0 1.2rem 1.2rem 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-top:none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; margin-bottom: 1rem;">""", unsafe_allow_html=True)
+            st.markdown(f"""<div style="margin-bottom: 10px; border-bottom: 1px solid {COLORS['line_light']};"></div>""", unsafe_allow_html=True)
             
             for j, item in enumerate(cat['items']):
-                c1, c2 = st.columns([8, 1])
+                # 使用 columns 來排版 checkbox 和 刪除按鈕
+                c1, c2 = st.columns([5, 1]) # 調整比例適應手機
                 with c1:
                     key = f"pack_{item}"
                     val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
@@ -780,8 +797,7 @@ def view_packing():
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
             
-            st.markdown("</div>", unsafe_allow_html=True)
-            
+    # 新增物品/分類區塊
     st.markdown("---")
     st.markdown("##### ➕ Add New Item")
     
