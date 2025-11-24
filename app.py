@@ -10,20 +10,19 @@ st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_
 
 # Muji 風格配色與樣式定義
 COLORS = {
-    'bg_main': '#F8F7F3',       # 極淺米色背景 (截圖風格)
+    'bg_main': '#F8F7F3',       # 極淺米色背景
     'surface': '#FFFFFF',       # 純白卡片
     'text_primary': '#5B5551',  # 深棕灰主文字
     'text_secondary': '#A09B96',# 淺灰輔助文字
-    'accent_warm': '#C7B299',   # 燕麥色 (強調)
-    'accent_deep': '#8C8376',   # 深卡其 (選中狀態)
+    'accent_warm': '#C7B299',   # 燕麥色
+    'accent_light': '#EBE9E5',  # 淺米白 (按鈕反白用)
     'line_light': '#EAE8E4',    # 極細淺灰線
-    'alert_red': '#B94047',     # 警示紅 (低飽和)
+    'alert_red': '#B94047',     # 警示紅
 }
 
 # 注入 CSS
 st.markdown(f"""
     <style>
-    /* 引入襯線體字體 */
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Shippori+Mincho:wght@400;500;600&display=swap');
 
     /* 全局設定 */
@@ -41,17 +40,16 @@ st.markdown(f"""
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* 簡約日式卡片 (極細邊框，無陰影) */
+    /* 簡約日式卡片 */
     .minimal-card {{
         background: {COLORS['surface']};
         border: 1px solid {COLORS['line_light']};
         border-radius: 12px;
-        box-shadow: none;
         padding: 1.5rem;
         margin-bottom: 1.2rem;
     }}
     
-    /* 簡約按鈕樣式 (無背景，細邊框) */
+    /* 修正 3: 按鈕樣式調整 (淺米白反白) */
     .stButton button {{
         background-color: transparent;
         border: 1px solid {COLORS['line_light']} !important;
@@ -63,17 +61,21 @@ st.markdown(f"""
         transition: all 0.2s ease;
         font-family: 'Shippori Mincho', serif;
     }}
+    /* Hover 狀態 */
     .stButton button:hover {{
-        color: {COLORS['text_primary']};
-        border-color: {COLORS['accent_warm']} !important;
+        background-color: {COLORS['accent_light']} !important; /* 淺米白背景 */
+        color: {COLORS['text_primary']} !important; /* 深色文字 */
+        border-color: {COLORS['line_light']} !important;
     }}
+    /* 選中/Primary 狀態 */
     .stButton button[kind="primary"] {{
-        background-color: {COLORS['accent_deep']} !important;
-        color: white !important;
-        border: none !important;
+        background-color: {COLORS['accent_light']} !important; /* 淺米白背景 */
+        color: {COLORS['text_primary']} !important; /* 深色文字 */
+        border: 1px solid {COLORS['accent_warm']} !important; /* 加一點強調邊框 */
+        font-weight: 600;
     }}
 
-    /* 天氣與匯率區塊 (簡約線條設計) */
+    /* 天氣與匯率區塊 */
     .info-grid-minimal {{
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -112,7 +114,7 @@ st.markdown(f"""
         color: {COLORS['text_primary']};
     }}
     
-    /* Ticket Style (簡約) */
+    /* Ticket Style */
     .wallet-pass {{
         background-color: #FFFFFF;
         border-radius: 12px;
@@ -417,7 +419,7 @@ def view_overview():
         st.session_state.show_chat = not st.session_state.show_chat
     if st.session_state.show_chat: view_assistant()
 
-    # --- 修正處：加入緊急求助區塊 (Minimalist Style) ---
+    # Emergency Card
     st.markdown(f"""
     <div class="minimal-card" style="border-color: {COLORS['line_light']}; background: {COLORS['surface']}; margin-top: 30px;">
         <div style="font-size: 0.7rem; font-weight: 600; color: {COLORS['alert_red']}; letter-spacing: 0.1em; margin-bottom: 12px;">緊急求助 / EMERGENCY</div>
@@ -446,7 +448,7 @@ def view_day(day_id):
     lon = day['coords']['lon']
     temp, w_text = get_weather(lat, lon) 
 
-    # Header: 仿照截圖風格，大號日期，定位，膠囊天氣
+    # Header (修正 1: HTML 靠左對齊，確保渲染)
     weather_html = f"""
 <div style="text-align:center; margin-bottom: 2rem; padding-top: 10px;">
 <h2 style="font-family: 'Shippori Mincho', serif; font-size: 3rem; margin:0 0 4px 0; color:{COLORS['text_primary']}; letter-spacing: 1px; font-weight: 500;">{day['date'].split(' ')[0]}</h2>
@@ -459,7 +461,7 @@ def view_day(day_id):
 """
     st.markdown(weather_html, unsafe_allow_html=True)
 
-    # Hotel Card: 仿照截圖，簡約線條框，右側圖標
+    # Hotel Card
     st.markdown(f"""
     <div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center;">
         <div>
@@ -471,25 +473,24 @@ def view_day(day_id):
     </div>
     """, unsafe_allow_html=True)
 
-    # Timeline: 仿照截圖風格，垂直線和圓點
+    # Timeline (修正 1: HTML 靠左對齊)
     for i, act in enumerate(day['activities']):
-        # Timeline Point and Line
-        st.markdown(f"""
-        <div style="position: relative; padding-left: 24px; margin-bottom: 1.5rem;">
-            <div class="timeline-point" style="position: absolute; left: 0; top: 6px;"></div>
-            {f'<div class="timeline-line"></div>' if i < len(day['activities']) - 1 else ''}
-            <div style="font-family:'Shippori Mincho', serif; font-size:0.9rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom: 8px;">{act['time']}</div>
-            <div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center; padding: 1.2rem;">
-                <div>
-                    <div style="font-weight:500; font-size:1.1rem; color:{COLORS['text_primary']}; font-family: 'Shippori Mincho', serif; margin-bottom: 4px;">{act['text']}</div>
-                    <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{act['desc']}</div>
-                </div>
-                <div style="font-size:1.5rem; color:{COLORS['line_light']};">{ '🍴' if act['type'] == 'food' else '🚆' if act['type'] == 'transport' else '📍' }</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        timeline_html = f"""
+<div style="position: relative; padding-left: 24px; margin-bottom: 1.5rem;">
+<div class="timeline-point" style="position: absolute; left: 0; top: 6px;"></div>
+{'<div class="timeline-line"></div>' if i < len(day['activities']) - 1 else ''}
+<div style="font-family:'Shippori Mincho', serif; font-size:0.9rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom: 8px;">{act['time']}</div>
+<div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center; padding: 1.2rem;">
+<div>
+<div style="font-weight:500; font-size:1.1rem; color:{COLORS['text_primary']}; font-family: 'Shippori Mincho', serif; margin-bottom: 4px;">{act['text']}</div>
+<div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{act['desc']}</div>
+</div>
+<div style="font-size:1.5rem; color:{COLORS['line_light']};">{'🍴' if act['type'] == 'food' else '🚆' if act['type'] == 'transport' else '📍'}</div>
+</div>
+</div>
+"""
+        st.markdown(timeline_html, unsafe_allow_html=True)
         
-        # Expander Content (保持簡約)
         with st.expander(f"查看詳情"):
             if 'guideText' in act:
                 st.markdown(f"""
@@ -505,7 +506,6 @@ def view_day(day_id):
             
             st.write("")
 
-            # Actions Buttons
             actions = []
             if 'mapUrl' in act: actions.append("map")
             if act['type'] == 'transport':
@@ -539,14 +539,21 @@ def view_packing():
     
     st.write("")
     
+    # 修正 2: 移除外層 HTML 標籤，改用 container 確保 checkbox 排版正常
     for cat in APP_DATA['packing']:
         with st.container():
-            st.markdown(f"<div class='minimal-card' style='padding: 1.2rem;'>", unsafe_allow_html=True)
-            st.markdown(f"<h4 style='margin-bottom:1rem; color:{COLORS['text_primary']}; font-family: \"Shippori Mincho\", serif;'>{cat['category']}</h4>", unsafe_allow_html=True)
+            # 這裡使用一個簡單的容器外觀
+            st.markdown(f"""
+            <div style="padding: 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-radius: 12px; margin-bottom: 1rem;">
+                <h4 style='margin-bottom:1rem; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif;'>{cat['category']}</h4>
+            """, unsafe_allow_html=True)
+            
+            # Checkbox 必須直接在 container 下，不能被 html div 包住
             for item in cat['items']:
                 key = f"pack_{item}"
                 val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
                 st.session_state.packing[key] = val
+            
             st.markdown("</div>", unsafe_allow_html=True)
 
 def view_assistant():
@@ -567,7 +574,7 @@ def view_assistant():
                 st.write(response)
         st.session_state.chat_history.append({"role": "model", "text": response})
 
-# --- 6. 頂部導覽列 (仿照截圖風格) ---
+# --- 6. 頂部導覽列 ---
 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 nav_cols = st.columns([1.2, 1, 1, 1, 1, 1, 1.2])
 nav_items = [("🏠", "overview"), ("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4), ("🎒", "packing")]
@@ -586,8 +593,9 @@ div[data-testid="column"] button:hover {{
     color: {COLORS['text_primary']} !important;
 }}
 div[data-testid="column"] button[kind="primary"] {{
-    background-color: {COLORS['accent_deep']} !important;
-    color: white !important;
+    background-color: {COLORS['accent_light']} !important;
+    color: {COLORS['text_primary']} !important;
+    border: 1px solid {COLORS['accent_warm']} !important;
     border-radius: 50% !important;
     width: 36px !important;
     height: 36px !important;
@@ -595,6 +603,7 @@ div[data-testid="column"] button[kind="primary"] {{
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    font-weight: 600 !important;
 }}
 </style>""", unsafe_allow_html=True)
 
