@@ -5,7 +5,7 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Mobile Scroll Nav Fix) ---
+# --- 1. 設定頁面與 CSS (Mobile Force Row Fix) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
@@ -28,7 +28,7 @@ st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Shippori+Mincho:wght@400;500;700&display=swap');
 
-    /* 1. 強制亮色主題 */
+    /* 1. 強制亮色主題變數 */
     :root {{
         --primary-color: {COLORS['warm_gold']};
         --background-color: {COLORS['bg_main']};
@@ -50,72 +50,69 @@ st.markdown(f"""
     #MainMenu, footer, header {{visibility: hidden;}}
 
     /* -----------------------------------------
-       ★ 關鍵修正：手機版導覽列強制橫向 (Mobile Nav Scroll)
-       利用 gap="small" 來鎖定導覽列
+       ★ 關鍵修正：手機版導覽列強制橫向 (Mobile Nav Fix)
        ----------------------------------------- */
     
-    @media (max-width: 640px) {{
-        /* 鎖定 gap="small" 的水平區塊 (即導覽列) */
-        div[data-testid="stHorizontalBlock"][gap="small"] {{
-            flex-direction: row !important;     /* 強制橫向 */
-            flex-wrap: nowrap !important;       /* 禁止換行 (關鍵!) */
-            overflow-x: auto !important;        /* 超出範圍時可左右滑動 */
-            align-items: center !important;
-            justify-content: flex-start !important; /* 靠左排列 */
-            padding-bottom: 10px !important;    /* 預留滑動條空間 */
-            
-            /* 隱藏滾動條但保留功能 (Webkit) */
-            -webkit-overflow-scrolling: touch; 
-        }}
-        
-        /* 隱藏滾動條外觀 */
-        div[data-testid="stHorizontalBlock"][gap="small"]::-webkit-scrollbar {{
-            display: none; 
-        }}
-
-        /* 鎖定導覽列內的 column */
-        div[data-testid="stHorizontalBlock"][gap="small"] > div[data-testid="column"] {{
-            width: 50px !important;       /* 固定欄位寬度 */
-            min-width: 50px !important;   /* 確保不會被壓縮 */
-            flex: 0 0 auto !important;    /* 禁止彈性伸縮 */
-            padding: 0 2px !important;    /* 縮小間距 */
-        }}
-
-        /* 鎖定導覽列按鈕 */
-        div[data-testid="stHorizontalBlock"][gap="small"] button {{
-            width: 40px !important;
-            height: 40px !important;
-            min-width: 40px !important;
-            font-size: 0.9rem !important;
-            padding: 0 !important;
-            margin: 0 auto !important;
-        }}
+    /* 針對我們設定 gap="small" 的導覽列區塊 */
+    div[data-testid="stHorizontalBlock"][gap="small"] {{
+        flex-direction: row !important;     /* 強制橫向 */
+        flex-wrap: nowrap !important;       /* 禁止換行 */
+        overflow-x: auto !important;        /* 允許左右滑動 */
+        align-items: center !important;
+        justify-content: center !important; /* 嘗試居中 */
+        padding-bottom: 5px !important;
+        gap: 6px !important;                /* 欄位間距 */
     }}
 
-    /* 電腦版導覽列樣式 */
-    div[data-testid="column"] button {{
-        background-color: {COLORS['nav_bg_inactive']} !important;
+    /* 強制覆蓋 Streamlit 手機版將 column 寬度設為 100% 的行為 */
+    div[data-testid="stHorizontalBlock"][gap="small"] > div[data-testid="column"] {{
+        width: auto !important;       /* 自動寬度 */
+        min-width: 36px !important;   /* 最小寬度 */
+        flex: 0 0 auto !important;    /* 禁止伸縮 */
+        padding: 0 !important;        /* 移除內距 */
+    }}
+
+    /* 導覽列按鈕樣式 */
+    div[data-testid="stHorizontalBlock"][gap="small"] button {{
+        border-radius: 50% !important;
+        width: 42px !important;       /* 電腦版尺寸 */
+        height: 42px !important;
+        padding: 0 !important;
         border: none !important;
+        background-color: {COLORS['nav_bg_inactive']} !important;
         color: {COLORS['text_secondary']} !important;
         font-weight: 500 !important;
-        border-radius: 50% !important; /* 圓形 */
-        width: 45px !important;
-        height: 45px !important;
-        padding: 0 !important;
-        margin: 0 auto !important;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s ease !important;
+        margin: 0 auto !important;
     }}
 
-    div[data-testid="column"] button:hover {{
+    /* 手機版按鈕特調尺寸 */
+    @media (max-width: 640px) {{
+        div[data-testid="stHorizontalBlock"][gap="small"] {{
+            justify-content: flex-start !important; /* 手機靠左滑動比較自然 */
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }}
+        
+        div[data-testid="stHorizontalBlock"][gap="small"] button {{
+            width: 36px !important;   /* 手機版縮小 */
+            height: 36px !important;
+            font-size: 0.85rem !important;
+        }}
+    }}
+
+    /* 導覽列狀態：懸停 */
+    div[data-testid="stHorizontalBlock"][gap="small"] button:hover {{
         background-color: {COLORS['linen_mist']} !important;
         color: {COLORS['text_primary']} !important;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
     }}
-    
-    div[data-testid="column"] button[kind="primary"] {{
+
+    /* 導覽列狀態：選中 (Primary) */
+    div[data-testid="stHorizontalBlock"][gap="small"] button[kind="primary"] {{
         background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
         border: 1px solid {COLORS['warm_gold']} !important;
@@ -124,10 +121,10 @@ st.markdown(f"""
     }}
 
     /* -----------------------------------------
-       通用元件樣式
+       其他元件樣式
        ----------------------------------------- */
 
-    /* 導覽列外框容器 */
+    /* 導覽列外框容器 (膠囊) */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         border-radius: 50px !important;
         border: 1px solid {COLORS['line_light']} !important;
@@ -135,7 +132,9 @@ st.markdown(f"""
         padding: 6px 10px !important; 
         margin: 0 auto 20px auto !important;
         width: fit-content !important;
+        max-width: 100% !important; /* 確保不超出螢幕 */
         box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        display: block !important;
     }}
 
     /* Google Map Link */
@@ -174,8 +173,8 @@ st.markdown(f"""
     }}
 
     /* 一般按鈕 (非導覽列) */
-    /* 使用 element-container 避免影響 nav */
-    .element-container .stButton button {{
+    /* 這裡使用更精確的選擇器，避免覆蓋導覽列 */
+    div[data-testid="stVerticalBlock"] .stButton button {{
         height: auto !important;
         width: auto !important;
         padding: 8px 20px !important;
@@ -185,7 +184,7 @@ st.markdown(f"""
         border-radius: 24px !important;
         font-weight: 500 !important;
     }}
-    .element-container .stButton button:hover {{
+    div[data-testid="stVerticalBlock"] .stButton button:hover {{
         border-color: {COLORS['warm_gold']} !important;
         color: {COLORS['warm_gold']} !important;
     }}
@@ -230,7 +229,8 @@ st.markdown(f"""
         border-radius: 16px;
         padding: 15px;
         border: 1px solid {COLORS['line_light']};
-        height: 120px;
+        min-height: 120px;
+        height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -318,6 +318,14 @@ st.markdown(f"""
         padding: 0px 8px !important;
         font-size: 0.8rem !important;
         background: transparent !important;
+        width: auto !important;
+        min-width: 20px !important;
+        box-shadow: none !important;
+    }}
+    .delete-btn button:hover {{
+        color: #D32F2F !important;
+        background: transparent !important;
+        box-shadow: none !important;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -336,6 +344,7 @@ DEFAULT_PACKING = [
 if 'packing_list' not in st.session_state:
     st.session_state.packing_list = DEFAULT_PACKING
 
+# Google Maps 連結
 APP_DATA = {
   "flight": { 
     "outbound": { "code": "TR892", "time": "12:30", "arrival": "17:20" }, 
@@ -485,12 +494,11 @@ def ticket_modal(ticket_key, title):
             st.session_state.is_editing = False
             st.rerun()
 
-# --- 5. 頂部導覽列 (關鍵：使用 gap="small" 來標記這組 columns) ---
+# --- 5. 頂部導覽列 (使用 gap="small" 進行 CSS 定位) ---
 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-# 使用 container(border=True) 包覆 columns
+# ★★★ 使用 container 包覆並設定 gap="small" ★★★
 with st.container(border=True):
-    # ★ 設定 gap="small" 供 CSS 選取
     nav_cols = st.columns(7, gap="small")
     nav_items = [
         ("🏠", "overview"), 
@@ -552,11 +560,12 @@ def view_overview():
     </a>
     """, unsafe_allow_html=True)
 
-    # Info Grid (使用 columns(2) 搭配 gap="medium" 以避免與導覽列 CSS 衝突)
+    # Info Grid (使用 columns(2) 搭配 gap="medium")
     rate = get_exchange_rate()
     temp1, weather1 = get_weather(43.06, 141.35) # Sapporo
     temp2, weather2 = get_weather(42.80, 140.68) # Niseko
 
+    # 在手機上強制保持並排
     c1, c2 = st.columns(2, gap="medium")
     with c1:
         st.markdown(f"""
@@ -720,7 +729,6 @@ def view_day(day_id):
                 """, unsafe_allow_html=True)
 
             if act['type'] == 'food' and 'menu' in act:
-                # 白色背景
                 st.markdown(f"""
                 <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: #FFFFFF; border: 1px solid {COLORS['line_light']};">
                     <div style="font-size:0.75rem; font-weight:600; color:{COLORS['accent_warm']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
@@ -766,9 +774,8 @@ def view_packing():
     
     st.write("")
     
-    # 顯示清單 (含刪除功能)
     for i, cat in enumerate(st.session_state.packing_list[:]):
-        with st.container():
+        with st.container(border=True):
             col_title, col_del_cat = st.columns([8, 1])
             with col_title:
                 st.markdown(f"""<h4 style='margin:0; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif;'>{cat['category']}</h4>""", unsafe_allow_html=True)
@@ -793,7 +800,6 @@ def view_packing():
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
             
-    # 新增物品/分類區塊
     st.markdown("---")
     st.markdown("##### ➕ Add New Item")
     
