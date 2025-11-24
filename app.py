@@ -4,8 +4,9 @@ import datetime
 import google.generativeai as genai
 import json
 import os
+from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Minimalist Style) ---
+# --- 1. 設定頁面與 CSS (Muji Pure Minimalist Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # Muji 風格配色與樣式定義
@@ -15,9 +16,8 @@ COLORS = {
     'text_primary': '#5B5551',  # 深棕灰主文字
     'text_secondary': '#A09B96',# 淺灰輔助文字
     'accent_warm': '#C7B299',   # 燕麥色
-    'accent_deep': '#8C8376',   # 深卡其 (補回此缺少的顏色)
-    'accent_light': '#EBE9E5',  # 淺米白 (按鈕反白用)
-    'line_light': '#EAE8E4',    # 極細淺灰線
+    'accent_deep': '#8C8376',   # 深卡其
+    'line_light': '#EAE8E4',    # 極細淺灰線 (用於邊框，不當作底線)
     'alert_red': '#B94047',     # 警示紅
 }
 
@@ -50,7 +50,7 @@ st.markdown(f"""
         margin-bottom: 1.2rem;
     }}
     
-    /* 按鈕樣式調整 */
+    /* 修正 3: 按鈕樣式調整 (純白反白) */
     .stButton button {{
         background-color: transparent;
         border: 1px solid {COLORS['line_light']} !important;
@@ -62,18 +62,20 @@ st.markdown(f"""
         transition: all 0.2s ease;
         font-family: 'Shippori Mincho', serif;
     }}
-    /* Hover 狀態 */
+    /* Hover 狀態 - 純白 */
     .stButton button:hover {{
-        background-color: {COLORS['accent_light']} !important;
+        background-color: #FFFFFF !important; /* 純白 */
         color: {COLORS['text_primary']} !important;
-        border-color: {COLORS['line_light']} !important;
+        border-color: {COLORS['accent_warm']} !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 輕微浮起 */
     }}
-    /* 選中/Primary 狀態 */
+    /* 選中/Primary 狀態 - 純白 */
     .stButton button[kind="primary"] {{
-        background-color: {COLORS['accent_light']} !important;
+        background-color: #FFFFFF !important; /* 純白 */
         color: {COLORS['text_primary']} !important;
-        border: 1px solid {COLORS['accent_warm']} !important;
+        border: 1px solid {COLORS['accent_deep']} !important;
         font-weight: 600;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }}
 
     /* 天氣與匯率區塊 */
@@ -96,6 +98,8 @@ st.markdown(f"""
         text-transform: uppercase;
         letter-spacing: 0.1em;
         margin-bottom: 8px;
+        /* 移除底線 */
+        border-bottom: none; 
     }}
     .info-value-minimal {{
         font-family: 'Shippori Mincho', serif;
@@ -128,30 +132,28 @@ st.markdown(f"""
         padding: 24px;
         background: #F8F7F3;
     }}
+    /* 移除虛線分割線 */
+    .pass-dashed-line {{
+        display: none; 
+    }}
+    /* 調整缺口位置 */
     .pass-notch-container {{
-        height: 20px;
+        height: 10px; /* 縮小高度因為沒有線了 */
         position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         background: #FFFFFF;
     }}
     .pass-notch-left, .pass-notch-right {{
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
         background-color: {COLORS['bg_main']};
         border-radius: 50%;
         position: absolute;
-        top: 0;
+        top: -8px;
         z-index: 10;
         border: 1px solid {COLORS['line_light']};
     }}
-    .pass-notch-left {{ left: -10px; border-right: none; }}
-    .pass-notch-right {{ right: -10px; border-left: none; }}
-    .pass-dashed-line {{
-        width: 90%;
-        border-top: 1px dashed {COLORS['line_light']};
-    }}
+    .pass-notch-left {{ left: -10px; }}
+    .pass-notch-right {{ right: -10px; }}
 
     /* 時間軸樣式 */
     .timeline-point {{
@@ -289,11 +291,15 @@ def chat_with_gemini(user_input):
 # --- 4. 票券視窗 ---
 @st.dialog("Digital Voucher")
 def ticket_modal(ticket_key, title):
-    existing = st.session_state.tickets.get(ticket_key, {"orderNumber": "", "url": "", "note": ""})
+    # 確保資料結構包含圖片欄位
+    default_ticket = {"orderNumber": "", "url": "", "note": "", "image": None}
+    existing = st.session_state.tickets.get(ticket_key, default_ticket)
+    
     if 'is_editing' not in st.session_state:
         st.session_state.is_editing = not (existing.get("orderNumber") or existing.get("url"))
 
     if not st.session_state.is_editing:
+        # --- 檢視模式 ---
         st.markdown(f"""
         <div class="wallet-pass">
             <div class="pass-header">
@@ -307,7 +313,6 @@ def ticket_modal(ticket_key, title):
             </div>
             <div class="pass-notch-container">
                 <div class="pass-notch-left"></div>
-                <div class="pass-dashed-line"></div>
                 <div class="pass-notch-right"></div>
             </div>
             <div style="padding: 20px; text-align: center; background: #FAFAFA;">
@@ -317,17 +322,36 @@ def ticket_modal(ticket_key, title):
             </div>
         </div>
         """, unsafe_allow_html=True)
+        
+        # 修正 4: 顯示上傳的票券圖片
+        if existing.get('image'):
+            st.image(existing['image'], caption="E-Ticket", use_container_width=True)
+
         if existing.get('url'): st.link_button("🔗 OPEN LINK", existing['url'], use_container_width=True)
+        
         if st.button("Edit Voucher", key="edit_btn", use_container_width=True):
             st.session_state.is_editing = True
             st.rerun()
     else:
+        # --- 編輯模式 ---
         st.markdown("### Edit Details")
         new_order = st.text_input("Confirmation No.", value=existing.get("orderNumber", ""))
         new_url = st.text_input("Link URL", value=existing.get("url", ""))
         new_note = st.text_area("Notes", value=existing.get("note", ""))
+        
+        # 修正 4: 新增圖片上傳功能
+        new_image = st.file_uploader("Upload Ticket Image", type=['png', 'jpg', 'jpeg'])
+        
         if st.button("Save Changes", type="primary", use_container_width=True):
-            st.session_state.tickets[ticket_key] = {"orderNumber": new_order, "url": new_url, "note": new_note}
+            # 如果有新圖片就更新，沒有則保留舊圖片 (如果有)
+            final_image = new_image if new_image else existing.get('image')
+            
+            st.session_state.tickets[ticket_key] = {
+                "orderNumber": new_order, 
+                "url": new_url, 
+                "note": new_note,
+                "image": final_image
+            }
             st.session_state.is_editing = False
             st.rerun()
 
@@ -339,8 +363,7 @@ def view_overview():
     <div style='text-align:center; padding: 30px 0 20px;'>
         <h1 style='font-family: "Shippori Mincho", serif; font-size: 2.5rem; margin-bottom: 8px; letter-spacing: 1px; font-weight: 500;'>Hokkaido</h1>
         <p style='color:{COLORS['text_secondary']}; letter-spacing: 0.3em; font-size: 0.8rem; font-weight: 400;'>DECEMBER 2025</p>
-        <div style="width: 60px; height: 1px; background-color: {COLORS['line_light']}; margin: 20px auto;"></div>
-    </div>
+        </div>
     """, unsafe_allow_html=True)
     
     # VJW Card
@@ -449,7 +472,7 @@ def view_day(day_id):
     lon = day['coords']['lon']
     temp, w_text = get_weather(lat, lon) 
 
-    # Header
+    # Header (修正 1: HTML 靠左對齊，確保渲染)
     weather_html = f"""
 <div style="text-align:center; margin-bottom: 2rem; padding-top: 10px;">
 <h2 style="font-family: 'Shippori Mincho', serif; font-size: 3rem; margin:0 0 4px 0; color:{COLORS['text_primary']}; letter-spacing: 1px; font-weight: 500;">{day['date'].split(' ')[0]}</h2>
@@ -501,9 +524,16 @@ def view_day(day_id):
                 </div>
                 """, unsafe_allow_html=True)
 
+            # 修正 2: 將推薦菜單獨立區隔
             if act['type'] == 'food' and 'menu' in act:
-                st.markdown(f"<div style='font-size:0.85rem; font-weight:600; color:{COLORS['accent_deep']}; margin-bottom:8px;'>RECOMMENDED</div>", unsafe_allow_html=True)
-                for m in act['menu']: st.markdown(f"<div style='margin-bottom:4px; color:{COLORS['text_primary']};'>• {m}</div>", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: #FFFFFF; border: 1px solid {COLORS['line_light']};">
+                    <div style="font-size:0.75rem; font-weight:600; color:{COLORS['accent_warm']}; margin-bottom:8px; letter-spacing: 0.1em;">🍽️ RECOMMENDED MENU</div>
+                    <ul style="margin: 0; padding-left: 20px; color: {COLORS['text_primary']}; font-size: 0.95rem;">
+                        {''.join([f'<li style="margin-bottom:4px;">{m}</li>' for m in act['menu']])}
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
             
             st.write("")
 
@@ -587,10 +617,10 @@ div[data-testid="column"] button {{
 }}
 div[data-testid="column"] button:hover {{
     color: {COLORS['text_primary']} !important;
-    background-color: {COLORS['accent_light']} !important;
+    background-color: #FFFFFF !important; /* 純白 */
 }}
 div[data-testid="column"] button[kind="primary"] {{
-    background-color: {COLORS['accent_light']} !important;
+    background-color: #FFFFFF !important; /* 純白 */
     color: {COLORS['text_primary']} !important;
     border: 1px solid {COLORS['accent_warm']} !important;
     border-radius: 50% !important;
@@ -601,6 +631,7 @@ div[data-testid="column"] button[kind="primary"] {{
     align-items: center !important;
     justify-content: center !important;
     font-weight: 600 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
 }}
 </style>""", unsafe_allow_html=True)
 
