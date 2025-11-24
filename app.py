@@ -5,7 +5,7 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Refined Light Style) ---
+# --- 1. 設定頁面與 CSS (Muji Precise Layout) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
 # 配色定義
@@ -18,7 +18,7 @@ COLORS = {
     'accent_deep': '#8C8376',   # 深卡其
     'linen_mist': '#FAF0E6',    # 亞麻色 (Hover)
     'warm_gold': '#DEB887',     # 暖金沙 (Active)
-    'nav_bg_inactive': '#F0EFEA', # 導覽列未選中
+    'nav_bg_inactive': '#F0EFEA', 
     'line_light': '#E0DCD8',    # 線條顏色
     'alert_red': '#B94047',     # 警示紅
 }
@@ -28,7 +28,7 @@ st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Shippori+Mincho:wght@400;500;700&display=swap');
 
-    /* 1. 強制亮色主題變數 (覆蓋手機深色模式) */
+    /* 1. 強制亮色主題變數 */
     :root {{
         --primary-color: {COLORS['warm_gold']};
         --background-color: {COLORS['bg_main']};
@@ -51,7 +51,7 @@ st.markdown(f"""
     #MainMenu, footer, header {{visibility: hidden;}}
 
     /* -----------------------------------------
-       導覽列樣式 (橫向 + 縮小寬度 + 居中)
+       導覽列樣式 (強力縮小版)
        ----------------------------------------- */
     
     /* 電腦版預設 */
@@ -60,41 +60,46 @@ st.markdown(f"""
         border: none !important;
         color: {COLORS['text_secondary']} !important;
         font-weight: 500 !important;
-        border-radius: 50% !important; /* 圓形 */
-        width: 42px !important;        /* 固定寬度 */
-        height: 42px !important;       /* 固定高度 */
+        border-radius: 50% !important;
+        width: 42px !important;
+        height: 42px !important;
         padding: 0 !important;
-        margin: 0 auto !important;     /* 自身居中 */
-        transition: all 0.2s ease !important;
+        margin: 0 auto !important;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.2s ease !important;
     }}
 
-    /* 手機版優化 */
+    /* ★★★ 手機版導覽列強制修正 (Force Narrow Layout) ★★★ */
     @media (max-width: 640px) {{
-        /* 導覽列容器 */
+        /* 強制容器橫向且緊湊 */
         div[data-testid="stHorizontalBlock"] {{
-            flex-direction: row !important;
+            gap: 4px !important; 
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
-            justify-content: center !important; /* 整體居中 */
-            gap: 8px !important; /* 按鈕間距 */
-            padding-bottom: 5px; /* 預留滑動條空間 */
+            justify-content: center !important;
         }}
         
-        /* 欄位寬度縮小 (不再撐滿) */
+        /* 強制欄位縮小，不允許擴張 */
         div[data-testid="column"] {{
-            min-width: auto !important;
+            flex: 0 0 auto !important; /* 關鍵：禁止自動伸縮 */
             width: auto !important;
-            flex: 0 0 auto !important; /* 不放大也不縮小，依內容大小 */
+            min-width: 0 !important;   /* 關鍵：允許縮到比預設更小 */
+            padding: 0 2px !important;
         }}
 
         /* 按鈕本體縮小 */
         div[data-testid="column"] button {{
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 0.85rem !important;
+            width: 34px !important;
+            height: 34px !important;
+            font-size: 0.8rem !important;
+        }}
+        
+        /* 首頁和清單圖示稍微大一點 */
+        div[data-testid="column"] button:contains("🏠"), 
+        div[data-testid="column"] button:contains("🎒") {{
+            font-size: 1.1rem !important;
         }}
     }}
 
@@ -104,7 +109,7 @@ st.markdown(f"""
         color: {COLORS['text_primary']} !important;
         transform: translateY(-1px);
     }}
-    /* 選中 (Active) - 白底金邊 */
+    /* 選中 (Active) */
     div[data-testid="column"] button[kind="primary"] {{
         background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
@@ -133,7 +138,7 @@ st.markdown(f"""
         background-color: {COLORS['surface']} !important;
     }}
     
-    /* 一般按鈕 (票券、訂單等) */
+    /* 一般按鈕 (非導覽列) */
     .stButton button {{
         height: auto !important;
         padding: 8px 20px !important;
@@ -149,36 +154,29 @@ st.markdown(f"""
         box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15);
     }}
 
-    /* ★★★ Google Map 連結按鈕強制修正 (去黑底) ★★★ */
-    /* 針對 link_button 且 href 包含 google maps 的元素 */
-    a[href*="google.com/maps"] {{
-        display: inline-flex;
+    /* ★★★ Google Map 連結樣式 (白底深字) ★★★ */
+    a[href*="maps.google.com"] {{
+        display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #FFFFFF !important; /* 白底 */
-        color: {COLORS['text_primary']} !important; /* 深字 */
-        border: 1px solid {COLORS['line_light']} !important; /* 淺灰框 */
+        background-color: #FFFFFF !important;
+        color: {COLORS['text_primary']} !important;
+        border: 1px solid {COLORS['line_light']} !important;
         border-radius: 24px !important;
         padding: 0.5rem 1rem !important;
         text-decoration: none !important;
         font-weight: 500 !important;
-        width: 100%; /* 滿版 */
+        width: 100%;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        transition: all 0.2s ease;
+        margin-bottom: 10px;
     }}
-    a[href*="google.com/maps"]:hover {{
+    a[href*="maps.google.com"]:hover {{
         border-color: {COLORS['warm_gold']} !important;
         color: {COLORS['warm_gold']} !important;
-        background-color: #FFFFFF !important;
         box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15) !important;
     }}
-    /* 確保 icon 顏色也正確 */
-    a[href*="google.com/maps"]::before {{
-        content: "📍 ";
-        margin-right: 5px;
-    }}
 
-    /* Expander (查看詳情) */
+    /* Expander */
     div[data-testid="stExpander"] {{
         background-color: #FFFFFF !important;
         border: 1px solid {COLORS['line_light']} !important;
@@ -210,6 +208,36 @@ st.markdown(f"""
     section[data-testid="stFileUploaderDropzone"] {{
         background-color: #FAFAFA !important;
         color: {COLORS['text_secondary']} !important;
+    }}
+
+    /* Info Grid Boxes (重寫樣式) */
+    .info-box-content {{
+        background: {COLORS['surface']};
+        border-radius: 16px;
+        padding: 15px;
+        border: 1px solid {COLORS['line_light']};
+        height: 120px; /* 固定高度確保對齊 */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }}
+    .info-label-fix {{
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: {COLORS['text_secondary']};
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-bottom: 1px solid {COLORS['line_light']};
+        padding-bottom: 6px;
+        margin-bottom: 6px;
+        display: flex; 
+        justify-content: space-between;
+    }}
+    .info-val-fix {{
+        font-family: 'Shippori Mincho', serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: {COLORS['text_primary']};
     }}
 
     /* Ticket Style */
@@ -280,7 +308,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. 資料與狀態管理 (連結更新) ---
+# --- 2. 資料與狀態管理 ---
 if 'view' not in st.session_state: st.session_state.view = 'overview'
 if 'tickets' not in st.session_state: st.session_state.tickets = {}
 if 'packing' not in st.session_state: st.session_state.packing = {}
@@ -295,7 +323,7 @@ DEFAULT_PACKING = [
 if 'packing_list' not in st.session_state:
     st.session_state.packing_list = DEFAULT_PACKING
 
-# ★★★ 更新真實 Google Maps 連結 ★★★
+# ★★★ Google Maps 連結 (全部確保為真實搜尋連結) ★★★
 APP_DATA = {
   "flight": { 
     "outbound": { "code": "TR892", "time": "12:30", "arrival": "17:20" }, 
@@ -310,9 +338,9 @@ APP_DATA = {
       "hotel": "JR-EAST METS", 
       "hotel_note": "札幌站北口", 
       "activities": [
-        { "time": "17:20", "text": "航班抵達 CTS", "type": "transport", "desc": "往 B1 搭 JR。", "guideText": "新千歲機場結構簡單，國際線出來後沿著指示標誌走約10分鐘可達國內線B1搭乘JR。建議先買好Kitaca或在售票機買票。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=New+Chitose+Airport+JR+Station" },
-        { "time": "19:45", "text": "飯店 Check-in", "type": "hotel", "desc": "JR-EAST METS", "guideText": "這間飯店最大優勢是「與車站直結」，北口出來步行2分鐘即達。大廳備品豐富，記得拿一些泡澡粉舒緩搭機疲勞。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=JR-East+Hotel+Mets+Sapporo", "contact": "+81-11-729-0011" },
-        { "time": "20:15", "text": "晚餐：湯咖哩", "type": "food", "desc": "Suage+ / GARAKU", "menu": ["知床雞野菜湯咖哩", "起司飯", "炸舞菇"], "notes": ["不可預約", "辣度選3", "現場排隊約30分"], "guideText": "北海道靈魂美食！Suage+特色是串籤素炸，保留食材原味；GARAKU湯頭較濃郁。推薦點「知床雞」搭配起司飯，將飯浸入湯中享用是道地吃法。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Soup+Curry+Suage+", "contact": "不可預約 / 現場候位", "stayTime": "1.5 小時" },
+        { "time": "17:20", "text": "航班抵達 CTS", "type": "transport", "desc": "往 B1 搭 JR。", "guideText": "新千歲機場結構簡單，國際線出來後沿著指示標誌走約10分鐘可達國內線B1搭乘JR。建議先買好Kitaca或在售票機買票。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=New+Chitose+Airport" },
+        { "time": "19:45", "text": "飯店 Check-in", "type": "hotel", "desc": "JR-EAST METS", "guideText": "這間飯店最大優勢是「與車站直結」，北口出來步行2分鐘即達。大廳備品豐富，記得拿一些泡澡粉舒緩搭機疲勞。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=JR-EAST+HOTEL+METS+SAPPORO", "contact": "+81-11-729-0011" },
+        { "time": "20:15", "text": "晚餐：湯咖哩", "type": "food", "desc": "Suage+ / GARAKU", "menu": ["知床雞野菜湯咖哩", "起司飯", "炸舞菇"], "notes": ["不可預約", "辣度選3", "現場排隊約30分"], "guideText": "北海道靈魂美食！Suage+特色是串籤素炸，保留食材原味；GARAKU湯頭較濃郁。推薦點「知床雞」搭配起司飯，將飯浸入湯中享用是道地吃法。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Suage+Plus+Sapporo", "contact": "不可預約 / 現場候位", "stayTime": "1.5 小時" },
         { "time": "22:30", "text": "夜間咖啡", "type": "food", "desc": "ESPRESSO D WORKS", "menu": ["巴斯克起司蛋糕", "拿鐵"], "notes": ["營業至24:00"], "guideText": "札幌有「收尾聖代」文化，這間則是深夜也能吃到的高品質巴斯克蛋糕。氛圍時髦放鬆，適合第一晚整理心情。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=ESPRESSO+D+WORKS+Sapporo", "contact": "營業至 23:30", "stayTime": "1 小時" }
       ]
     },
@@ -331,7 +359,7 @@ APP_DATA = {
       "activities": [
           { "time": "09:00", "text": "全日滑雪", "type": "activity", "desc": "粉雪天堂", "guideText": "Hanazono雪場對新手友善，有魔毯設施；高手則可挑戰樹林區。粉雪(Japow)摔倒也不痛。記得做好防寒，風鏡和面罩是必備品。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Niseko+Hanazono+Resort" },
           { "time": "12:00", "text": "午餐：Hanazono EDGE", "type": "food", "desc": "雪場餐廳", "menu": ["蟹肉拉麵", "炸豬排咖哩", "披薩"], "notes": ["建議11:30前到", "人潮眾多"], "guideText": "近年翻新的雪場餐廳，挑高設計視野極佳。蟹肉拉麵湯頭鮮美，滑雪後喝熱湯最過癮。午餐時段一位難求，強烈建議提早11:30前入座。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Hanazono+EDGE", "contact": "無預約服務", "stayTime": "1 小時" },
-          { "time": "18:00", "text": "Hirafu 晚餐", "type": "food", "desc": "居酒屋/燒肉", "menu": ["成吉思汗烤肉", "北海道生啤酒", "烤羊肉"], "notes": ["需提前預約", "搭飯店接駁車"], "guideText": "Hirafu是二世谷最熱鬧的區域，充滿異國風情。成吉思汗烤羊肉沒有腥味，搭配冰涼的Sapporo Classic啤酒是絕配。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Niseko+Hirafu+Village", "contact": "需查閱特定餐廳", "stayTime": "2 小時" }
+          { "time": "18:00", "text": "Hirafu 晚餐", "type": "food", "desc": "居酒屋/燒肉", "menu": ["成吉思汗烤肉", "北海道生啤酒", "烤羊肉"], "notes": ["需提前預約", "搭飯店接駁車"], "guideText": "Hirafu是二世谷最熱鬧的區域，充滿異國風情。成吉思汗烤羊肉沒有腥味，搭配冰涼的Sapporo Classic啤酒是絕配。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Hirafu+Niseko+Restaurants", "contact": "需查閱特定餐廳", "stayTime": "2 小時" }
       ]
     },
     { 
@@ -346,9 +374,9 @@ APP_DATA = {
       "id": 4, "date": "12/12 (五)", "location": "CTS Airport", "coords": {"lat": 42.7752, "lon": 141.6923}, 
       "hotel": "Home Sweet Home", "hotel_note": "機場日", 
       "activities": [
-          { "time": "09:20", "text": "巴士出發", "type": "transport", "desc": "前往機場", "guideText": "從二世谷搭巴士直達機場最方便，不用扛行李轉車。冬天路況難料，巴士時間通常抓很寬裕，上車即可補眠欣賞雪景。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Park+Hyatt+Niseko+Bus+Stop" },
-          { "time": "13:00", "text": "拉麵道場", "type": "food", "desc": "一幻 / 白樺山莊", "menu": ["鮮蝦鹽味拉麵", "味噌拉麵", "免費水煮蛋"], "notes": ["行李需寄放", "排隊人潮多"], "guideText": "機場國內線3樓的拉麵一級戰區。「一幻」主打濃郁蝦湯，鮮味衝擊；「白樺山莊」則有無限供應的水煮蛋，味噌湯頭偏油香。登機前的最後美味！", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Hokkaido+Ramen+Dojo+New+Chitose", "contact": "機場國內線 3F", "stayTime": "1 小時" },
-          { "time": "14:30", "text": "甜點 & 伴手禮巡禮", "type": "food", "desc": "國內線 2F 掃貨", "menu": ["北菓樓 夢不思議泡芙 (必吃!)", "LeTAO 起司霜淇淋", "Calbee+ 現炸薯條", "雪印 北海道牛奶霜淇淋", "Kinotoya 起司塔"], "notes": ["國內線比較好逛", "保冷袋必備"], "guideText": "新千歲機場國內線2F是伴手禮一級戰區！\n\n【機場必買 Top 10】\n1. 北菓樓 (妖精之森/夢不思議泡芙)\n2. 六花亭 (奶油葡萄夾心/草莓巧克力)\n3. ROYCE (生巧克力/洋芋片)\n4. LeTAO (雙層起司蛋糕)\n5. Snaffle's (起司舒芙蕾)\n6. Calbee+ (薯條三兄弟)\n7. 白色戀人\n8. HORI (哈密瓜果凍)\n9. Kitaichi Glass (玻璃杯)\n10. 十勝牛奶布丁", "mapUrl": "https://www.new-chitose-airport.jp/tw/floor/2f.html", "contact": "國內線 2F", "stayTime": "2.5 小時" },
+          { "time": "09:20", "text": "巴士出發", "type": "transport", "desc": "前往機場", "guideText": "從二世谷搭巴士直達機場最方便，不用扛行李轉車。冬天路況難料，巴士時間通常抓很寬裕，上車即可補眠欣賞雪景。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Niseko+Welcome+Center" },
+          { "time": "13:00", "text": "拉麵道場", "type": "food", "desc": "一幻 / 白樺山莊", "menu": ["鮮蝦鹽味拉麵", "味噌拉麵", "免費水煮蛋"], "notes": ["行李需寄放", "排隊人潮多"], "guideText": "機場國內線3樓的拉麵一級戰區。「一幻」主打濃郁蝦湯，鮮味衝擊；「白樺山莊」則有無限供應的水煮蛋，味噌湯頭偏油香。登機前的最後美味！", "mapUrl": "https://www.google.com/maps/search/?api=1&query=Hokkaido+Ramen+Dojo", "contact": "機場國內線 3F", "stayTime": "1 小時" },
+          { "time": "14:30", "text": "甜點 & 伴手禮巡禮", "type": "food", "desc": "國內線 2F 掃貨", "menu": ["北菓樓 夢不思議泡芙 (必吃!)", "LeTAO 起司霜淇淋", "Calbee+ 現炸薯條", "雪印 北海道牛奶霜淇淋", "Kinotoya 起司塔"], "notes": ["國內線比較好逛", "保冷袋必備"], "guideText": "新千歲機場國內線2F是伴手禮一級戰區！\n\n【機場必買 Top 10】\n1. 北菓樓 (妖精之森/夢不思議泡芙)\n2. 六花亭 (奶油葡萄夾心/草莓巧克力)\n3. ROYCE (生巧克力/洋芋片)\n4. LeTAO (雙層起司蛋糕)\n5. Snaffle's (起司舒芙蕾)\n6. Calbee+ (薯條三兄弟)\n7. 白色戀人\n8. HORI (哈密瓜果凍)\n9. Kitaichi Glass (玻璃杯)\n10. 十勝牛奶布丁", "mapUrl": "https://www.google.com/maps/search/?api=1&query=New+Chitose+Airport+Domestic+Terminal+2F", "contact": "國內線 2F", "stayTime": "2.5 小時" },
           { "time": "18:40", "text": "TR893 起飛", "type": "transport", "desc": "返台", "guideText": "酷航櫃台通常在起飛前3小時開櫃，建議提早去排隊托運，因為新千歲國際線免稅店排隊結帳人潮通常非常驚人。", "mapUrl": "https://www.google.com/maps/search/?api=1&query=New+Chitose+Airport+International+Terminal" }
       ]
     }
@@ -448,7 +476,7 @@ def ticket_modal(ticket_key, title):
 # --- 5. 頂部導覽列 ---
 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-# 使用 7 個等寬欄位 (手機版 CSS 已強制縮小)
+# 使用 7 個等寬欄位
 nav_cols = st.columns(7)
 nav_items = [
     ("🏠", "overview"), 
@@ -509,38 +537,43 @@ def view_overview():
     </a>
     """, unsafe_allow_html=True)
 
-    # Info Grid
+    # Info Grid (使用 st.columns 確保排版)
     rate = get_exchange_rate()
     temp1, weather1 = get_weather(43.06, 141.35) # Sapporo
     temp2, weather2 = get_weather(42.80, 140.68) # Niseko
 
-    st.markdown(f"""
-    <div class="info-grid-minimal">
-        <div class="info-box-minimal">
-            <div class="info-label-minimal">EXCHANGE</div>
-            <div style="display: flex; align-items: baseline;">
-                <span style="font-size: 0.9rem; color: {COLORS['text_secondary']}; margin-right: 4px;">¥1000 ≈</span>
-                <div class="info-value-minimal">{int(rate*1000) if rate else '...'}</div>
-                <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-left: 4px;">TWD</span>
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"""
+        <div class="info-box-content">
+            <div class="info-label-fix">
+                <span>EXCHANGE</span>
+                <span style="font-weight:400;">¥1000</span>
             </div>
-            <div style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin-top:4px;">1 JPY = {rate:.3f}</div>
+            <div class="info-val-fix">{int(rate*1000) if rate else '...'} <span style="font-size:0.9rem; font-weight:400;">TWD</span></div>
+            <div style="font-size:0.7rem; color:{COLORS['text_secondary']}; text-align:right;">1 JPY = {rate:.3f}</div>
         </div>
-        <div class="info-box-minimal">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 4px;">
-                <div class="info-label-minimal" style="margin-bottom: 0; border: none;">WEATHER</div>
-                <div class="info-label-minimal" style="margin-bottom: 0; color: {COLORS['text_secondary']}; border: none;">TODAY</div>
+        """, unsafe_allow_html=True)
+    
+    with c2:
+        st.markdown(f"""
+        <div class="info-box-content">
+            <div class="info-label-fix">
+                <span>WEATHER</span>
+                <span style="font-weight:400;">TODAY</span>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div style="font-family: 'Shippori Mincho', serif; font-size: 1rem;">Sapporo</div>
-                <div><span style="font-family: 'Shippori Mincho', serif; font-size: 1rem; font-weight: 500;">{temp1}°</span> <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; background: #F0EFEA; padding: 2px 6px; border-radius: 4px;">{weather1}</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:0.8rem;">Sapporo</span>
+                <span style="font-weight:600;">{temp1}° {weather1}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="font-family: 'Shippori Mincho', serif; font-size: 1rem;">Niseko</div>
-                <div><span style="font-family: 'Shippori Mincho', serif; font-size: 1rem; font-weight: 500;">{temp2}°</span> <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; background: #F0EFEA; padding: 2px 6px; border-radius: 4px;">{weather2}</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem;">Niseko</span>
+                <span style="font-weight:600;">{temp2}° {weather2}</span>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+
+    st.write("")
 
     # Flights Card
     st.markdown(f'<div class="minimal-card">', unsafe_allow_html=True)
@@ -673,7 +706,6 @@ def view_day(day_id):
                 """, unsafe_allow_html=True)
 
             if act['type'] == 'food' and 'menu' in act:
-                # 白色背景
                 st.markdown(f"""
                 <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: #FFFFFF; border: 1px solid {COLORS['line_light']};">
                     <div style="font-size:0.75rem; font-weight:600; color:{COLORS['accent_warm']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
@@ -685,11 +717,10 @@ def view_day(day_id):
             
             st.write("")
 
-            # ★★★ Google Map 按鈕修正 ★★★
+            # Google Map Button
             if 'mapUrl' in act:
-                # 使用 CSS class 來確保樣式，並使用 st.link_button (需 Streamlit 1.27+) 或 HTML
                 st.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
-                st.write("") # Spacer
+                st.write("") 
 
             actions = []
             if act['type'] == 'transport':
@@ -720,7 +751,6 @@ def view_packing():
     
     st.write("")
     
-    # 顯示清單 (含刪除功能)
     for i, cat in enumerate(st.session_state.packing_list[:]):
         with st.container():
             col_title, col_del_cat = st.columns([8, 1])
@@ -752,7 +782,6 @@ def view_packing():
             
             st.markdown("</div>", unsafe_allow_html=True)
             
-    # 新增物品/分類區塊
     st.markdown("---")
     st.markdown("##### ➕ Add New Item")
     
