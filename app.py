@@ -22,7 +22,6 @@ COLORS = {
 # 注入 CSS
 st.markdown(f"""
     <style>
-    /* 原本的 Google Font 引用保留，但下面會強制覆寫 */
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;600;700&family=Shippori+Mincho:wght@400;500;700&display=swap');
 
     /* 全局設定 */
@@ -30,41 +29,35 @@ st.markdown(f"""
         background-color: {COLORS['bg']};
         background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238e8071' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         
-        /* 修改處 1: 全局字體改為微軟正黑體 */
-        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif; /* <--- 修改處 */
-        
+        /* 全局字體改為微軟正黑體 */
+        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
         color: {COLORS['text_main']};
     }}
     
-    /* 修改處 2: 標題字體強制改為微軟正黑體 */
     h1, h2, h3, .serif-font {{
-        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif !important; /* <--- 修改處 */
+        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif !important;
     }}
 
-    /* 隱藏預設元素 */
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* 卡片風格 (Muji Card) */
+    /* 卡片風格 */
     .muji-card {{
         background: {COLORS['surface']};
         border: 1px solid {COLORS['line']};
         border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(100, 90, 80, 0.04); /* 柔和陰影 */
+        box-shadow: 0 2px 12px rgba(100, 90, 80, 0.04);
         padding: 1.25rem;
         margin-bottom: 1rem;
         transition: all 0.3s ease;
     }}
     
-    /* 導覽列按鈕 */
+    /* 按鈕樣式 */
     .stButton button {{
         background-color: {COLORS['surface']};
         border: 1px solid {COLORS['line']};
         color: {COLORS['text_sub']};
-        border-radius: 20px;
-        
-        /* 修改處 3: 按鈕字體改為微軟正黑體 */
-        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif; /* <--- 修改處 */
-        
+        border-radius: 12px; /* 稍微圓角一點，配合新的整齊設計 */
+        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
         font-weight: 500;
         transition: all 0.2s;
     }}
@@ -79,7 +72,7 @@ st.markdown(f"""
         border-color: {COLORS['accent']};
     }}
 
-    /* 天氣與匯率卡片的 Grid 排版 (強制對齊) */
+    /* 天氣 Grid */
     .info-grid {{
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -94,7 +87,7 @@ st.markdown(f"""
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 120px; /* 強制高度一致 */
+        height: 120px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }}
     .info-label {{
@@ -108,25 +101,20 @@ st.markdown(f"""
         margin-bottom: 8px;
     }}
     .info-value {{
-        /* 修改處 4: 數值顯示改為微軟正黑體 */
-        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif; /* <--- 修改處 */
-        
+        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
         font-size: 1.5rem;
         font-weight: 700;
         color: {COLORS['text_main']};
     }}
 
-    /* Apple Wallet Ticket Style */
+    /* Ticket Style */
     .wallet-pass {{
         background-color: #FFFFFF;
         border-radius: 20px;
         overflow: hidden;
         box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         position: relative;
-        
-        /* 修改處 5: 票券容器字體改為微軟正黑體 */
-        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif; /* <--- 修改處 */
-        
+        font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
         margin-bottom: 20px;
         border: 1px solid {COLORS['line']};
     }}
@@ -145,7 +133,7 @@ st.markdown(f"""
     .pass-notch-left, .pass-notch-right {{
         width: 24px;
         height: 24px;
-        background-color: rgba(0,0,0,0.6); /* Dark overlay to simulate transparency on modal */
+        background-color: rgba(0,0,0,0.6);
         border-radius: 50%;
         position: absolute;
         top: 0;
@@ -158,7 +146,6 @@ st.markdown(f"""
         border-top: 2px dashed {COLORS['line']};
     }}
     
-    /* Streamlit 元件微調 */
     div[data-testid="stExpander"] {{
         background-color: {COLORS['surface']};
         border: 1px solid {COLORS['line']};
@@ -240,29 +227,23 @@ APP_DATA = {
   ]
 }
 
-# --- 3. 核心功能函式 (Weather, Rate, AI) ---
+# --- 3. 核心功能函式 ---
 
 def get_weather(lat, lon):
     try:
-        # 使用 Open-Meteo 免費 API
         url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo"
-        res = requests.get(url, timeout=2).json() # 短 timeout 避免卡住
-        
+        res = requests.get(url, timeout=2).json()
         if 'current' in res:
             temp = res['current']['temperature_2m']
             code = res['current']['weather_code']
-            
-            # 天氣代碼轉換
             w_text = "陰"
             if code == 0: w_text = "晴"
             elif code in [1,2,3]: w_text = "多雲"
             elif code in [61,63,65,80,81,82]: w_text = "雨"
             elif code in [71,73,75,85,86]: w_text = "雪"
             return temp, w_text
-            
         return None, None
     except:
-        # 失敗時回傳預設值 (避免畫面空白)
         return -2, "雪(預測)"
 
 def get_exchange_rate():
@@ -272,61 +253,51 @@ def get_exchange_rate():
         rate = res['jpy']['twd']
         return rate
     except:
-        return 0.215 # 預設匯率
+        return 0.215
 
 def chat_with_gemini(user_input):
     api_key = st.secrets.get("GOOGLE_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    
-    # 離線模式 (Offline Mode)
     if not api_key:
         lower = user_input.lower()
         if "機票" in lower or "flight" in lower: return "班機是去程 TR892 (12:30)，回程 TR893 (18:40)。"
         if "天氣" in lower or "weather" in lower: return "北海道12月平均氣溫約 -2°C 至 -6°C，請務必穿著保暖。"
         if "吃" in lower or "food" in lower: return "推薦湯咖哩 (Suage+)、成吉思汗烤肉和海鮮丼！"
         return "目前為離線模式，我只能回答基本行程資訊。請設定 API Key 以啟用完整 AI 功能。"
-    
-    # 線上模式
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         system_prompt = f"You are a helpful travel assistant for a Hokkaido trip. Itinerary: {json.dumps(APP_DATA['days'])}. Keep answers short."
-        
         history = st.session_state.chat_history.copy()
         formatted_history = [{"role": "user" if m["role"] == "user" else "model", "parts": [m["text"]]} for m in history]
-        
         chat = model.start_chat(history=formatted_history)
         response = chat.send_message(system_prompt + "\nUser: " + user_input)
         return response.text
     except Exception as e:
         return f"AI 連線錯誤: {str(e)}"
 
-# --- 4. 票券視窗 (st.dialog) ---
+# --- 4. 票券視窗 ---
 
 @st.dialog("Digital Voucher")
 def ticket_modal(ticket_key, title):
     existing = st.session_state.tickets.get(ticket_key, {"orderNumber": "", "url": "", "note": ""})
-    
     if 'is_editing' not in st.session_state:
         st.session_state.is_editing = not (existing.get("orderNumber") or existing.get("url"))
 
     if not st.session_state.is_editing:
-        # --- 檢視模式 (Wallet Style) ---
         st.markdown(f"""
         <div class="wallet-pass">
             <div class="pass-header">
                 <div style="font-size: 10px; font-weight: bold; color: #aaa; letter-spacing: 2px;">RESERVATION</div>
                 <div style="font-size: 24px; font-weight: bold; color: #333; font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;">{title}</div>  
                 <div style="font-size: 12px; color: #666; margin-top: 5px;">{existing.get('note', '')}</div>
-                
                 <div style="margin-top: 30px;">
                     <div style="font-size: 10px; font-weight: bold; color: #aaa; letter-spacing: 2px;">CONFIRMATION NO.</div>
-                    <div style="font-size: 20px; font-weight: bold; font-family: monospace; color: #333;">
-                        {existing.get('orderNumber', '—')}
-                    </div>
+                    <div style="font-size: 20px; font-weight: bold; font-family: monospace; color: #333;">{existing.get('orderNumber', '—')}</div>
                 </div>
             </div>
             <div class="pass-notch-container">
-                <div class="pass-notch-left" style="background-color: #262730;"></div> <div class="pass-dashed-line"></div>
+                <div class="pass-notch-left" style="background-color: #262730;"></div>
+                <div class="pass-dashed-line"></div>
                 <div class="pass-notch-right" style="background-color: #262730;"></div>
             </div>
             <div style="padding: 20px; text-align: center;">
@@ -336,21 +307,15 @@ def ticket_modal(ticket_key, title):
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        if existing.get('url'):
-            st.link_button("🔗 OPEN LINK", existing['url'], use_container_width=True)
-        
+        if existing.get('url'): st.link_button("🔗 OPEN LINK", existing['url'], use_container_width=True)
         if st.button("Edit", key="edit_btn"):
             st.session_state.is_editing = True
             st.rerun()
-            
     else:
-        # --- 編輯模式 ---
         st.markdown("### Edit Details")
         new_order = st.text_input("Confirmation No.", value=existing.get("orderNumber", ""))
         new_url = st.text_input("Link URL", value=existing.get("url", ""))
         new_note = st.text_area("Notes", value=existing.get("note", ""))
-        
         if st.button("Save", type="primary", use_container_width=True):
             st.session_state.tickets[ticket_key] = {"orderNumber": new_order, "url": new_url, "note": new_note}
             st.session_state.is_editing = False
@@ -359,7 +324,6 @@ def ticket_modal(ticket_key, title):
 # --- 5. 頁面視圖 ---
 
 def view_overview():
-    # Header
     st.markdown(f"""
     <div style='text-align:center; padding: 20px 0; border-bottom: 1px solid {COLORS['line']}'>
         <h1 style='color:{COLORS['text_main']}; font-size: 2rem; margin-bottom: 0;'>Hokkaido</h1>
@@ -368,37 +332,56 @@ def view_overview():
     """, unsafe_allow_html=True)
     
     st.write("")
-    st.link_button("🏛️ Visit Japan Web (入境申請)", "https://vjw-lp.digital.go.jp/en/", type="primary", use_container_width=True)
     
+    # VJW Card
+    vjw_url = "https://vjw-lp.digital.go.jp/en/"
+    st.markdown(f"""
+    <style>
+    .vjw-card {{
+        display: block; text-decoration: none;
+        background: linear-gradient(135deg, #C79D6D 0%, #9C7247 100%); 
+        border-radius: 16px; padding: 16px 20px; margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(199, 157, 109, 0.3);
+        transition: all 0.3s ease; position: relative; overflow: hidden;
+    }}
+    .vjw-card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 25px rgba(199, 157, 109, 0.45); }}
+    .vjw-content {{ display: flex; align-items: center; justify-content: space-between; color: white; font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif; }}
+    .vjw-icon {{ font-size: 28px; margin-right: 15px; background: rgba(255,255,255,0.2); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }}
+    .vjw-text {{ flex-grow: 1; }}
+    .vjw-title {{ font-size: 16px; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 2px; }}
+    .vjw-subtitle {{ font-size: 12px; opacity: 0.9; font-weight: 300; }}
+    .vjw-arrow {{ font-size: 18px; opacity: 0.8; }}
+    .vjw-bg-pattern {{ position: absolute; top: -10px; right: -10px; font-size: 100px; opacity: 0.1; color: white; pointer-events: none; }}
+    </style>
+    <a href="{vjw_url}" target="_blank" class="vjw-card">
+        <div class="vjw-bg-pattern">🇯🇵</div>
+        <div class="vjw-content">
+            <div class="vjw-icon">✈️</div>
+            <div class="vjw-text"><div class="vjw-title">Visit Japan Web</div><div class="vjw-subtitle">入境審查 / 海關申報 / 免稅 QR</div></div>
+            <div class="vjw-arrow">➜</div>
+        </div>
+    </a>
+    """, unsafe_allow_html=True)
     st.write("")
 
-    # Info Grid (匯率 & 天氣) - 使用 HTML/CSS 強制對齊
     rate = get_exchange_rate()
     temp, weather = get_weather(43.06, 141.35)
     
     st.markdown(f"""
     <div class="info-grid">
         <div class="info-box">
-            <div>
-                <div class="info-label">Exchange</div>
-                <div class="info-value">{int(rate*1000) if rate else '...'} <span style="font-size:0.8rem">TWD</span></div>
-            </div>
+            <div><div class="info-label">Exchange</div><div class="info-value">{int(rate*1000) if rate else '...'} <span style="font-size:0.8rem">TWD</span></div></div>
             <div style="font-size:0.7rem; color:#aaa; font-family:monospace;">¥1000 JPY</div>
         </div>
         <div class="info-box">
-            <div>
-                <div class="info-label">Sapporo</div>
-                <div class="info-value">{temp}° <span style="font-size:0.8rem">{weather}</span></div>
-            </div>
+            <div><div class="info-label">Sapporo</div><div class="info-value">{temp}° <span style="font-size:0.8rem">{weather}</span></div></div>
             <div style="font-size:0.7rem; color:#aaa;">Today</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # 航班資訊
     st.markdown(f'<div class="muji-card">', unsafe_allow_html=True)
     st.markdown(f"<h3 style='font-size:1rem; margin-bottom:1rem; color:{COLORS['text_main']}'>✈️ Flights</h3>", unsafe_allow_html=True)
-    
     f1, f2 = st.columns(2)
     with f1:
         st.caption("OUTBOUND (12/08)")
@@ -408,26 +391,17 @@ def view_overview():
         st.caption("INBOUND (12/12)")
         st.markdown("**18:40** TR893")
         if st.button("Ticket (C)", key="fi_c"): ticket_modal("flight_chien", "機票 (C)")
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # AI Assistant
-    if st.button("✨ AI Assistant", use_container_width=True):
-        st.session_state.show_chat = not st.session_state.show_chat
+    if st.button("✨ AI Assistant", use_container_width=True): st.session_state.show_chat = not st.session_state.show_chat
+    if st.session_state.show_chat: view_assistant()
 
-    if st.session_state.show_chat:
-        view_assistant()
-
-    # 緊急求助 (底部)
     st.markdown(f"""
     <div style="margin-top: 2rem; padding: 1.5rem; background: #FFF5F5; border-radius: 12px; border: 1px solid {COLORS['red']}20;">
         <div style="color:{COLORS['red']}; font-weight:bold; font-size:0.9rem; margin-bottom:0.5rem;">🆘 EMERGENCY</div>
-        <div style="display:flex; gap:1rem; font-size:0.8rem; color:{COLORS['text_sub']};">
-            <span>110 Police</span> <span>|</span> <span>119 Ambulance</span>
-        </div>
+        <div style="display:flex; gap:1rem; font-size:0.8rem; color:{COLORS['text_sub']};"><span>110 Police</span> <span>|</span> <span>119 Ambulance</span></div>
         <div style="margin-top:10px; padding:10px; background:white; border-radius:4px; border:1px solid {COLORS['red']}10;">
-            <div style="font-size:0.7rem; color:#999;">札幌辦事處 (緊急聯絡)</div>
-            <div style="font-weight:bold; color:{COLORS['text_main']};">080-1460-2568</div>
+            <div style="font-size:0.7rem; color:#999;">札幌辦事處 (緊急聯絡)</div><div style="font-weight:bold; color:{COLORS['text_main']};">080-1460-2568</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -435,10 +409,22 @@ def view_overview():
 def view_day(day_id):
     day = APP_DATA['days'][day_id]
     
+    # --- 1. 即時天氣預報顯示 (修改處：增強設計) ---
+    lat = day['coords']['lat']
+    lon = day['coords']['lon']
+    temp, w_text = get_weather(lat, lon) # 呼叫 API
+
     st.markdown(f"""
     <div style="text-align:center; margin-bottom: 1.5rem;">
         <h2 style="font-size: 2.5rem; margin:0; color:{COLORS['text_main']}">{day['date'].split(' ')[0]}</h2>
-        <div style="color:{COLORS['text_sub']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase;">{day['location']}</div>
+        <div style="color:{COLORS['text_sub']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 10px;">{day['location']}</div>
+        
+        <div style="display: inline-flex; align-items: center; gap: 10px; background: #FFFFFF; padding: 8px 18px; border-radius: 30px; border: 1px solid {COLORS['line']}; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+             <span style="font-size: 1.5rem;">🌥️</span> <div style="text-align: left; line-height: 1.2;">
+                 <div style="font-size: 1.1rem; font-weight: bold; color: {COLORS['text_main']}">{temp}° {w_text}</div>
+                 <div style="font-size: 0.65rem; color: #AAA; font-weight: bold; letter-spacing: 1px;">REAL-TIME FORECAST</div>
+             </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -456,7 +442,6 @@ def view_day(day_id):
 
     # Timeline
     for i, act in enumerate(day['activities']):
-        # Timeline visuals
         st.markdown(f"""
         <div style="display:flex; align-items:center; gap:10px; margin-top:1rem; margin-bottom:0.5rem;">
             <span style="font-family:monospace; font-size:0.8rem; background:{COLORS['line']}; padding:2px 6px; border-radius:4px; color:{COLORS['text_main']}">{act['time']}</span>
@@ -465,42 +450,62 @@ def view_day(day_id):
         """, unsafe_allow_html=True)
         
         with st.expander(f"詳情 / {act['desc']}"):
-            # Guide Note
+            # Note Area
             if 'guideText' in act:
                 st.markdown(f"""
-                <div style="background:{COLORS['bg']}; border:1px solid {COLORS['line']}; padding:12px; border-radius:8px; margin-bottom:10px;">
+                <div style="background:{COLORS['bg']}; border:1px solid {COLORS['line']}; padding:12px; border-radius:8px; margin-bottom:15px;">
                     <strong style="color:{COLORS['accent']}; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em;">💡 Guide Note</strong>
                     <p style="font-size:0.9rem; margin-top:5px; line-height:1.6; color:{COLORS['text_main']}; white-space: pre-wrap;">{act['guideText']}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Menu
             if act['type'] == 'food' and 'menu' in act:
                 st.markdown(f"<div style='font-size:0.8rem; font-weight:bold; color:{COLORS['text_sub']}; margin-bottom:5px;'>RECOMMENDED</div>", unsafe_allow_html=True)
-                for m in act['menu']:
-                    st.markdown(f"- {m}")
+                for m in act['menu']: st.markdown(f"- {m}")
             
-            # Buttons
-            c1, c2 = st.columns(2)
+            st.write("") # Spacer
+
+            # --- 2. 按鈕重新設計 (修改處：對齊與設計) ---
+            # 邏輯：檢查有哪些按鈕，然後用單一 columns 容器裝載，保證高度一致
+            
+            # 收集需要的按鈕
+            actions = []
             if 'mapUrl' in act:
-                c1.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
+                actions.append("map")
+            if act['type'] == 'transport': # 如果是交通類型，顯示兩張票
+                actions.append("ticket_w")
+                actions.append("ticket_c")
             
-            # Transport Tickets
-            if act['type'] == 'transport':
-                t1, t2 = st.columns(2)
-                if t1.button("Ticket (W)", key=f"t_{day_id}_{i}_w"):
-                    ticket_modal(f"t_{day_id}_{i}_w", f"Ticket (W) - {act['text']}")
-                if t2.button("Ticket (C)", key=f"t_{day_id}_{i}_c"):
-                    ticket_modal(f"t_{day_id}_{i}_c", f"Ticket (C) - {act['text']}")
+            if actions:
+                # 動態創建 columns: 有幾個按鈕就開幾個欄位，保證滿版對齊
+                cols = st.columns(len(actions))
+                
+                col_idx = 0
+                
+                # 渲染 Map 按鈕
+                if "map" in actions:
+                    with cols[col_idx]:
+                        st.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
+                    col_idx += 1
+                
+                # 渲染 Ticket W 按鈕
+                if "ticket_w" in actions:
+                    with cols[col_idx]:
+                        if st.button("🎫 Ticket (W)", key=f"t_{day_id}_{i}_w", use_container_width=True):
+                            ticket_modal(f"t_{day_id}_{i}_w", f"Ticket (W) - {act['text']}")
+                    col_idx += 1
+                
+                # 渲染 Ticket C 按鈕
+                if "ticket_c" in actions:
+                    with cols[col_idx]:
+                        if st.button("🎫 Ticket (C)", key=f"t_{day_id}_{i}_c", use_container_width=True):
+                            ticket_modal(f"t_{day_id}_{i}_c", f"Ticket (C) - {act['text']}")
 
 def view_packing():
     st.header("Packing List")
-    
-    # Progress
     total = sum(len(c['items']) for c in APP_DATA['packing'])
     checked = sum(1 for k, v in st.session_state.packing.items() if v)
     st.progress(checked / total if total > 0 else 0)
-    
     for cat in APP_DATA['packing']:
         with st.container(border=True):
             st.markdown(f"**{cat['category']}**")
@@ -512,40 +517,25 @@ def view_packing():
 def view_assistant():
     st.markdown("---")
     for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]):
-            st.write(msg["text"])
-            
+        with st.chat_message(msg["role"]): st.write(msg["text"])  
     if prompt := st.chat_input("Ask me about your trip..."):
         st.session_state.chat_history.append({"role": "user", "text": prompt})
         with st.chat_message("user"): st.write(prompt)
-        
         with st.chat_message("model"):
             with st.spinner("Thinking..."):
                 response = chat_with_gemini(prompt)
                 st.write(response)
         st.session_state.chat_history.append({"role": "model", "text": response})
 
-# --- 6. 頂部導覽列 (Sticky Style) ---
-
-# 使用 Columns 模擬導覽列
+# --- 6. 頂部導覽列 ---
 nav_cols = st.columns([1.5, 1, 1, 1, 1, 1, 1.5])
-nav_items = [
-    ("🏠 Home", "overview"),
-    ("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4),
-    ("🎒 List", "packing")
-]
-
+nav_items = [("🏠 Home", "overview"), ("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4), ("🎒 List", "packing")]
 for i, (label, view_name) in enumerate(nav_items):
-    # 判斷是否為當前頁面，給予視覺回饋 (透過 st.button type='primary')
     is_active = st.session_state.view == view_name
     if nav_cols[i].button(label, key=f"nav_{view_name}", type="primary" if is_active else "secondary", use_container_width=True):
         st.session_state.view = view_name
         st.rerun()
 
-# --- 7. 渲染主畫面 ---
-if st.session_state.view == 'overview':
-    view_overview()
-elif st.session_state.view == 'packing':
-    view_packing()
-elif isinstance(st.session_state.view, int):
-    view_day(st.session_state.view)
+if st.session_state.view == 'overview': view_overview()
+elif st.session_state.view == 'packing': view_packing()
+elif isinstance(st.session_state.view, int): view_day(st.session_state.view)
