@@ -5,27 +5,25 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Lively Earth Style) ---
+# --- 1. 設定頁面與 CSS (Muji Minimalist Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
-# Muji 風格配色 (加入一些活潑的大地色塊)
+# Muji 風格配色與樣式定義
 COLORS = {
-    'bg_main': '#F9F8F6',       # 背景: 極淺暖灰
-    'surface': '#FFFFFF',       # 卡片: 純白
-    'text_primary': '#4A4238',  # 文字: 深暖棕
-    'text_secondary': '#9C8E7E',# 文字: 淺灰褐
+    'bg_main': '#F8F7F3',       # 極淺米色背景
+    'surface': '#FFFFFF',       # 純白卡片
+    'text_primary': '#5B5551',  # 深棕灰主文字
+    'text_secondary': '#A09B96',# 淺灰輔助文字
     'accent_warm': '#C7B299',   # 燕麥色
-    'accent_active': '#8C8376', # 導覽列選中: 深褐灰
-    'accent_hover': '#E6E2DE',  # 導覽列懸停: 淺灰
-    'line_light': '#E0DCD8',    # 線條顏色
+    'accent_deep': '#8C8376',   # 深卡其 (已補回此關鍵顏色)
+    'line_light': '#EAE8E4',    # 極細淺灰線 (底線用)
     'alert_red': '#B94047',     # 警示紅
-    'nav_bg': '#F0EFEA',        # 導覽列預設背景
 }
 
 # 注入 CSS
 st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Shippori+Mincho:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Shippori+Mincho:wght@400;500;600&display=swap');
 
     /* 全局設定 */
     .stApp {{
@@ -36,35 +34,30 @@ st.markdown(f"""
     
     h1, h2, h3, h4, h5, h6 {{
         font-family: 'Shippori Mincho', 'Noto Serif TC', serif !important;
+        font-weight: 500 !important;
         color: {COLORS['text_primary']} !important;
     }}
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* 簡約日式卡片 (有邊框) */
+    /* 簡約日式卡片 */
     .minimal-card {{
         background: {COLORS['surface']};
         border: 1px solid {COLORS['line_light']};
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 1.2rem;
     }}
-
-    /* Streamlit Container 自定義邊框顏色 (用於住宿卡片) */
-    div[data-testid="stVerticalBlockBorderWrapper"] {{
-        border-color: {COLORS['line_light']} !important;
-        border-radius: 16px !important;
-        background-color: {COLORS['surface']};
-    }}
     
-    /* 按鈕樣式 (純白反白風格) */
+    /* 按鈕樣式調整 */
     .stButton button {{
         background-color: transparent;
         border: 1px solid {COLORS['line_light']} !important;
         color: {COLORS['text_secondary']};
-        border-radius: 24px;
-        padding: 6px 20px;
-        font-weight: 500;
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-weight: 400;
+        box-shadow: none;
         transition: all 0.2s ease;
         font-family: 'Shippori Mincho', serif;
     }}
@@ -72,36 +65,14 @@ st.markdown(f"""
         background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
         border-color: {COLORS['accent_warm']} !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }}
     .stButton button[kind="primary"] {{
         background-color: #FFFFFF !important;
         color: {COLORS['text_primary']} !important;
-        border: 1px solid {COLORS['accent_active']} !important;
-        font-weight: 700;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }}
-
-    /* 導覽列按鈕 (色塊風格 - 活潑化) */
-    div[data-testid="column"] button {{
-        background-color: {COLORS['nav_bg']} !important; /* 預設淺色塊 */
-        border: none !important;
-        color: {COLORS['text_secondary']} !important;
-        font-weight: 500 !important;
-        border-radius: 12px !important; /* 方圓形色塊 */
-        height: auto !important;
-        padding: 8px 4px !important;
-    }}
-    div[data-testid="column"] button:hover {{
-        background-color: {COLORS['accent_hover']} !important;
-        color: {COLORS['text_primary']} !important;
-    }}
-    /* 選中狀態 - 深色塊 */
-    div[data-testid="column"] button[kind="primary"] {{
-        background-color: {COLORS['accent_active']} !important;
-        color: #FFFFFF !important; /* 反白文字 */
-        box-shadow: 0 4px 10px rgba(140, 131, 118, 0.3) !important;
+        border: 1px solid {COLORS['accent_deep']} !important;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }}
 
     /* 天氣與匯率區塊 */
@@ -113,30 +84,31 @@ st.markdown(f"""
     }}
     .info-box-minimal {{
         background: {COLORS['surface']};
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 1.2rem;
         border: 1px solid {COLORS['line_light']};
     }}
     .info-label-minimal {{
         font-size: 0.7rem;
-        font-weight: 700;
+        font-weight: 600;
         color: {COLORS['text_secondary']};
         text-transform: uppercase;
         letter-spacing: 0.1em;
         margin-bottom: 8px;
-        border-bottom: 1px solid {COLORS['line_light']}; /* 復原底線 */
+        /* 復原底線 */
+        border-bottom: 1px solid {COLORS['line_light']};
         padding-bottom: 4px;
     }}
     .info-value-minimal {{
         font-family: 'Shippori Mincho', serif;
         font-size: 1.6rem;
-        font-weight: 600;
+        font-weight: 500;
         color: {COLORS['text_primary']};
-        line-height: 1.2;
+        line-height: 1.1;
         margin-top: 8px;
     }}
 
-    /* Expander */
+    /* Expander 優化 */
     div[data-testid="stExpander"] {{
         background-color: transparent;
         border: none;
@@ -149,7 +121,7 @@ st.markdown(f"""
     /* Ticket Style */
     .wallet-pass {{
         background-color: #FFFFFF;
-        border-radius: 16px;
+        border-radius: 12px;
         overflow: hidden;
         border: 1px solid {COLORS['line_light']};
         font-family: 'Shippori Mincho', serif;
@@ -157,11 +129,12 @@ st.markdown(f"""
     }}
     .pass-header {{
         padding: 24px;
-        background: {COLORS['bg_main']};
+        background: #F8F7F3;
     }}
+    /* 復原虛線 */
     .pass-dashed-line {{
         width: 90%;
-        border-top: 1px dashed {COLORS['line_light']}; /* 復原虛線 */
+        border-top: 1px dashed {COLORS['line_light']};
     }}
     .pass-notch-container {{
         height: 20px;
@@ -184,15 +157,13 @@ st.markdown(f"""
     .pass-notch-left {{ left: -10px; border-right: none; }}
     .pass-notch-right {{ right: -10px; border-left: none; }}
 
-    /* 時間軸 */
+    /* 時間軸樣式 */
     .timeline-point {{
-        width: 9px;
-        height: 9px;
+        width: 8px;
+        height: 8px;
         background-color: {COLORS['accent_warm']};
         border-radius: 50%;
         margin-right: 12px;
-        border: 2px solid {COLORS['bg_main']}; /* 增加白邊 */
-        box-shadow: 0 0 0 1px {COLORS['accent_warm']};
     }}
     .timeline-line {{
         position: absolute;
@@ -347,11 +318,11 @@ def ticket_modal(ticket_key, title):
     else:
         # 編輯模式
         st.markdown("### Edit Details")
-        new_order = st.text_input("Confirmation No. / 訂單編號", value=existing.get("orderNumber", ""))
-        new_url = st.text_input("Link URL / 連結", value=existing.get("url", ""))
-        new_note = st.text_area("Notes / 備註", value=existing.get("note", ""))
+        new_order = st.text_input("Confirmation No.", value=existing.get("orderNumber", ""))
+        new_url = st.text_input("Link URL", value=existing.get("url", ""))
+        new_note = st.text_area("Notes", value=existing.get("note", ""))
         
-        new_image = st.file_uploader("Upload Image / 上傳憑證", type=['png', 'jpg', 'jpeg'])
+        new_image = st.file_uploader("Upload Ticket Image", type=['png', 'jpg', 'jpeg'])
         
         if st.button("Save Changes", type="primary", use_container_width=True):
             final_image = new_image if new_image else existing.get('image')
@@ -367,7 +338,7 @@ def ticket_modal(ticket_key, title):
 # --- 5. 頁面視圖 ---
 
 def view_overview():
-    # Header
+    # Header (復原分隔線)
     st.markdown(f"""
     <div style='text-align:center; padding: 30px 0 20px;'>
         <h1 style='font-family: "Shippori Mincho", serif; font-size: 2.5rem; margin-bottom: 8px; letter-spacing: 1px; font-weight: 500;'>Hokkaido</h1>
@@ -385,7 +356,7 @@ def view_overview():
         text-decoration: none !important; /* 強制無底線 */
         background: {COLORS['surface']}; 
         border: 1px solid {COLORS['line_light']};
-        border-radius: 16px; padding: 16px 24px; margin-bottom: 24px;
+        border-radius: 12px; padding: 16px 24px; margin-bottom: 24px;
         transition: all 0.2s ease;
     }}
     .vjw-card-minimal:hover {{ border-color: {COLORS['accent_warm']}; text-decoration: none !important; }}
@@ -439,7 +410,7 @@ def view_overview():
     </div>
     """, unsafe_allow_html=True)
 
-    # Flights Card (新增落地時間與按鈕)
+    # Flights Card (更新落地時間與按鈕)
     st.markdown(f'<div class="minimal-card">', unsafe_allow_html=True)
     st.markdown(f"<h3 style='font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:8px; font-weight: 500; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 8px;'>✈️ 航班 <span style='margin-left: auto; color: {COLORS['text_secondary']}; font-size: 1.2rem;'>•••</span></h3>", unsafe_allow_html=True)
     
@@ -525,24 +496,22 @@ def view_day(day_id):
 """
     st.markdown(weather_html, unsafe_allow_html=True)
 
-    # Hotel Card (整合版：名稱 + 虛線 + 按鈕)
-    with st.container(border=True):
-        st.markdown(f"""
-        <div style="display:flex; justify-content:space-between; align-items:start;">
-            <div>
-                <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">ACCOMMODATION</div>
-                <div style="font-weight:500; font-size:1.2rem; margin-bottom:4px; font-family: 'Shippori Mincho', serif;">{day['hotel']}</div>
-                <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{day['hotel_note']}</div>
-            </div>
-            <div style="font-size:1.8rem; color:{COLORS['line_light']};">🛏️</div>
+    # Hotel Card (新增 Booking Info 按鈕)
+    st.markdown(f"""
+    <div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+        <div>
+            <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 2px; display: inline-block;">ACCOMMODATION</div>
+            <div style="font-weight:500; font-size:1.2rem; margin-bottom:4px; font-family: 'Shippori Mincho', serif;">{day['hotel']}</div>
+            <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{day['hotel_note']}</div>
         </div>
-        <div style="border-top: 1px dashed {COLORS['line_light']}; margin: 16px 0 12px 0;"></div>
-        """, unsafe_allow_html=True)
-        
-        # 整合在卡片內的按鈕
-        if st.button("Booking Info / 訂單資料", key=f"hotel_btn_{day_id}", use_container_width=True):
-            ticket_modal(f"hotel_{day_id}", f"Hotel: {day['hotel']}")
-
+        <div style="font-size:1.8rem; color:{COLORS['line_light']};">🛏️</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 按鈕區塊
+    if st.button("Booking Info / 訂單資料", key=f"hotel_btn_{day_id}", use_container_width=True):
+        ticket_modal(f"hotel_{day_id}", f"Hotel: {day['hotel']}")
+    
     st.write("")
 
     # Timeline
@@ -629,10 +598,40 @@ def view_packing():
                 st.session_state.packing[key] = val
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- 6. 頂部導覽列 (色塊活潑化) ---
+# --- 6. 頂部導覽列 ---
 st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 nav_cols = st.columns([1.2, 1, 1, 1, 1, 1, 1.2])
 nav_items = [("🏠", "overview"), ("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4), ("🎒", "packing")]
+
+st.markdown(f"""<style>
+div[data-testid="column"] button {{
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    font-size: 0.9rem !important;
+    border: none !important;
+    background-color: transparent !important;
+    color: {COLORS['text_secondary']} !important;
+    font-family: 'Shippori Mincho', serif !important;
+}}
+div[data-testid="column"] button:hover {{
+    color: {COLORS['text_primary']} !important;
+    background-color: #FFFFFF !important;
+}}
+div[data-testid="column"] button[kind="primary"] {{
+    background-color: #FFFFFF !important;
+    color: {COLORS['text_primary']} !important;
+    border: 1px solid {COLORS['accent_warm']} !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}}
+</style>""", unsafe_allow_html=True)
 
 for i, (label, view_name) in enumerate(nav_items):
     is_active = st.session_state.view == view_name
