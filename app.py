@@ -8,13 +8,19 @@ from PIL import Image
 # --- 1. 設定頁面與 CSS (Screenshot Replica Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
-# 配色定義 (從截圖吸取)
+# 配色定義 (修復版：包含所有需要的鍵值)
 COLORS = {
     'bg_main': '#F9F8F6',       # 背景: 極淺暖灰
     'surface': '#FFFFFF',       # 卡片: 純白
     'text_primary': '#5B5551',  # 文字: 深棕灰
     'text_secondary': '#A09B96',# 文字: 淺灰
-    'accent_brown': '#6B6359',  # 截圖中的深棕色 (選中日期背景)
+    
+    # --- 關鍵修復：補回缺失的顏色鍵值 ---
+    'accent_brown': '#6B6359',  # 深棕色 (導覽列選中)
+    'accent_warm': '#C7B299',   # 燕麥色 (VJW hover, 進度條)
+    'accent_deep': '#8C8376',   # 深卡其 (Note 標題)
+    # --------------------------------
+    
     'pill_bg': '#FDFBF7',       # 導覽列膠囊背景
     'pill_border': '#EAE8E4',   # 導覽列膠囊邊框
     'line_light': '#EAE8E4',    # 通用淺線
@@ -92,7 +98,6 @@ st.markdown(f"""
     }}
 
     /* 左右兩側的功能圖示按鈕 (Home/List) - 排除在膠囊之外 */
-    /* 我們會用特定的 key 或結構來區分，這裡直接針對最外層的 columns 內的按鈕做通用設定，然後膠囊內的會覆寫 */
     div[data-testid="column"] > div > div > div > div > button {{
         border: none !important;
         background: transparent !important;
@@ -124,6 +129,11 @@ st.markdown(f"""
         border-radius: 24px !important;
         color: {COLORS['text_primary']} !important;
         background: #FFFFFF !important;
+        font-family: 'Shippori Mincho', serif !important;
+    }}
+    .minimal-card button:hover {{
+        border-color: {COLORS['accent_warm']} !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }}
 
     /* 天氣與匯率區塊 */
@@ -374,35 +384,30 @@ def ticket_modal(ticket_key, title):
             st.session_state.is_editing = False
             st.rerun()
 
-# --- 5. 頂部導覽列 (重構：膠囊 Style) ---
+# --- 5. 頂部導覽列 (膠囊復刻) ---
 st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 
-# 這裡使用 columns 來佈局：左(Home) - 中(Dates) - 右(List)
+# 佈局：左(Home) - 中(Dates Pill) - 右(List)
 c_home, c_nav, c_list = st.columns([1, 5, 1])
 
-# 左側 Home 按鈕
 with c_home:
     if st.button("🏠", key="nav_home", use_container_width=True):
         st.session_state.view = 'overview'
         st.rerun()
 
-# 中間日期區塊 (膠囊)
 with c_nav:
-    # 使用 container(border=True) 來觸發 CSS 膠囊樣式
+    # 這裡利用 st.container(border=True) 來觸發 CSS 中的膠囊樣式
     with st.container(border=True):
-        # 內部 5 個日期按鈕
         d1, d2, d3, d4, d5 = st.columns(5)
         nav_dates = [("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4)]
         
         for idx, (label, view_id) in enumerate(nav_dates):
-            # 判斷是否選中，決定使用 primary (實心圓) 還是 secondary (透明)
             is_active = (st.session_state.view == view_id)
             with [d1, d2, d3, d4, d5][idx]:
                 if st.button(label, key=f"nav_d{idx}", type="primary" if is_active else "secondary", use_container_width=True):
                     st.session_state.view = view_id
                     st.rerun()
 
-# 右側 List 按鈕
 with c_list:
     if st.button("🎒", key="nav_packing", use_container_width=True):
         st.session_state.view = 'packing'
@@ -568,12 +573,12 @@ def view_day(day_id):
 """
     st.markdown(weather_html, unsafe_allow_html=True)
 
-    # Hotel Card (改為純 HTML 容器以避免與膠囊 CSS 衝突)
+    # Hotel Card (改為純 HTML 容器)
     st.markdown(f"""
     <div class="minimal-card">
         <div style="display:flex; justify-content:space-between; align-items:start;">
             <div>
-                <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">ACCOMMODATION</div>
+                <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 2px; display: inline-block;">ACCOMMODATION</div>
                 <div style="font-weight:500; font-size:1.2rem; margin-bottom:4px; font-family: 'Shippori Mincho', serif;">{day['hotel']}</div>
                 <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{day['hotel_note']}</div>
             </div>
@@ -582,7 +587,6 @@ def view_day(day_id):
     </div>
     """, unsafe_allow_html=True)
     
-    # Booking Info 按鈕
     if st.button("Booking Info / 訂單資料", key=f"hotel_btn_{day_id}", use_container_width=True):
         ticket_modal(f"hotel_{day_id}", f"Hotel: {day['hotel']}")
 
@@ -610,7 +614,7 @@ def view_day(day_id):
             if 'guideText' in act:
                 st.markdown(f"""
                 <div style="padding:12px; border-radius:8px; margin-bottom:12px; background: #F0EFEA;">
-                    <strong style="color:{COLORS['text_secondary']}; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:4px;">💡 Note</strong>
+                    <strong style="color:{COLORS['accent_deep']}; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:4px;">💡 Note</strong>
                     <p style="font-size:0.9rem; line-height:1.6; color:{COLORS['text_primary']}; margin:0;">{act['guideText']}</p>
                 </div>
                 """, unsafe_allow_html=True)
