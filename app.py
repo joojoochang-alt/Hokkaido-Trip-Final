@@ -409,20 +409,28 @@ def view_overview():
 def view_day(day_id):
     day = APP_DATA['days'][day_id]
     
-    # --- 1. 即時天氣預報顯示 (修改處：增強設計) ---
+    # --- 1. 即時天氣預報顯示 ---
     lat = day['coords']['lat']
     lon = day['coords']['lon']
-    temp, w_text = get_weather(lat, lon) # 呼叫 API
+    temp, w_text = get_weather(lat, lon) 
 
+    # 確保天氣圖示根據天氣狀況變化 (簡單版)
+    weather_icon = "🌥️"
+    if "晴" in w_text: weather_icon = "☀️"
+    elif "雨" in w_text: weather_icon = "🌧️"
+    elif "雪" in w_text: weather_icon = "❄️"
+
+    # 使用單純的 HTML 結構，移除註解避免解析錯誤
     st.markdown(f"""
     <div style="text-align:center; margin-bottom: 1.5rem;">
         <h2 style="font-size: 2.5rem; margin:0; color:{COLORS['text_main']}">{day['date'].split(' ')[0]}</h2>
-        <div style="color:{COLORS['text_sub']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 10px;">{day['location']}</div>
+        <div style="color:{COLORS['text_sub']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 15px;">{day['location']}</div>
         
-        <div style="display: inline-flex; align-items: center; gap: 10px; background: #FFFFFF; padding: 8px 18px; border-radius: 30px; border: 1px solid {COLORS['line']}; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-             <span style="font-size: 1.5rem;">🌥️</span> <div style="text-align: left; line-height: 1.2;">
-                 <div style="font-size: 1.1rem; font-weight: bold; color: {COLORS['text_main']}">{temp}° {w_text}</div>
-                 <div style="font-size: 0.65rem; color: #AAA; font-weight: bold; letter-spacing: 1px;">REAL-TIME FORECAST</div>
+        <div style="display: inline-flex; align-items: center; gap: 12px; background: #FFFFFF; padding: 10px 20px; border-radius: 30px; border: 1px solid {COLORS['line']}; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+             <span style="font-size: 1.8rem; line-height: 1;">{weather_icon}</span>
+             <div style="text-align: left; line-height: 1.1;">
+                 <div style="font-size: 1.2rem; font-weight: bold; color: {COLORS['text_main']}">{temp}° {w_text}</div>
+                 <div style="font-size: 0.6rem; color: #AAA; font-weight: 700; letter-spacing: 1px;">REAL-TIME</div>
              </div>
         </div>
     </div>
@@ -465,37 +473,32 @@ def view_day(day_id):
             
             st.write("") # Spacer
 
-            # --- 2. 按鈕重新設計 (修改處：對齊與設計) ---
-            # 邏輯：檢查有哪些按鈕，然後用單一 columns 容器裝載，保證高度一致
-            
-            # 收集需要的按鈕
+            # --- 按鈕區 (動態對齊邏輯) ---
             actions = []
             if 'mapUrl' in act:
                 actions.append("map")
-            if act['type'] == 'transport': # 如果是交通類型，顯示兩張票
+            if act['type'] == 'transport':
                 actions.append("ticket_w")
                 actions.append("ticket_c")
             
             if actions:
-                # 動態創建 columns: 有幾個按鈕就開幾個欄位，保證滿版對齊
                 cols = st.columns(len(actions))
-                
                 col_idx = 0
                 
-                # 渲染 Map 按鈕
+                # Render Map
                 if "map" in actions:
                     with cols[col_idx]:
                         st.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
                     col_idx += 1
                 
-                # 渲染 Ticket W 按鈕
+                # Render Ticket W
                 if "ticket_w" in actions:
                     with cols[col_idx]:
                         if st.button("🎫 Ticket (W)", key=f"t_{day_id}_{i}_w", use_container_width=True):
                             ticket_modal(f"t_{day_id}_{i}_w", f"Ticket (W) - {act['text']}")
                     col_idx += 1
                 
-                # 渲染 Ticket C 按鈕
+                # Render Ticket C
                 if "ticket_c" in actions:
                     with cols[col_idx]:
                         if st.button("🎫 Ticket (C)", key=f"t_{day_id}_{i}_c", use_container_width=True):
@@ -539,3 +542,4 @@ for i, (label, view_name) in enumerate(nav_items):
 if st.session_state.view == 'overview': view_overview()
 elif st.session_state.view == 'packing': view_packing()
 elif isinstance(st.session_state.view, int): view_day(st.session_state.view)
+
