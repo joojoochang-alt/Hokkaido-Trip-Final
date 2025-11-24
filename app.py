@@ -5,24 +5,25 @@ import json
 import os
 from PIL import Image
 
-# --- 1. 設定頁面與 CSS (Muji Lively Earth Style) ---
+# --- 1. 設定頁面與 CSS (Muji Balanced Harmony Style) ---
 st.set_page_config(page_title="Hokkaido Trip Dec 2025", layout="centered", page_icon="❄️")
 
-# Muji 風格配色 (加入 #FFE4E1 與 #DEB887)
+# 配色定義
 COLORS = {
     'bg_main': '#F9F8F6',       # 背景: 極淺暖灰
-    'surface': '#FFFFFF',       # 卡片: 純白
+    'surface': '#FFFFFF',       # 純白卡片
     'text_primary': '#5B5551',  # 文字: 深暖棕
     'text_secondary': '#9C8E7E',# 文字: 淺灰褐
+    'accent_warm': '#C7B299',   # 燕麥色
+    'accent_deep': '#8C8376',   # 深卡其
     
-    # --- 新增顏色 ---
-    'rose_mist': '#FFE4E1',     # 霧玫瑰 (用於 hover, 美食背景)
-    'warm_gold': '#DEB887',     # 暖金沙 (用於選中狀態, 時間軸點, 強調邊框)
-    # ----------------
+    # 導覽列與互動色
+    'rose_mist': '#FFE4E1',     # 霧玫瑰 (Hover)
+    'warm_gold': '#DEB887',     # 暖金沙 (Active)
+    'nav_bg_inactive': '#F0EFEA', # 導覽列未選中背景
     
     'line_light': '#E0DCD8',    # 線條顏色
     'alert_red': '#B94047',     # 警示紅
-    'nav_bg': '#F0EFEA',        # 導覽列預設背景
 }
 
 # 注入 CSS
@@ -44,7 +45,39 @@ st.markdown(f"""
 
     #MainMenu, footer, header {{visibility: hidden;}}
 
-    /* 簡約日式卡片 (有邊框) */
+    /* --- 導覽列專屬樣式 (7等份和諧色塊) --- */
+    div[data-testid="column"] button {{
+        background-color: {COLORS['nav_bg_inactive']} !important;
+        border: none !important;
+        color: {COLORS['text_secondary']} !important;
+        font-weight: 500 !important;
+        border-radius: 12px !important; /* 統一圓角 */
+        height: 48px !important; /* 統一高度 */
+        width: 100% !important;  /* 填滿欄位 */
+        padding: 0 !important;
+        transition: all 0.3s ease !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }}
+    /* 懸停狀態 (Hover) - 霧玫瑰色，半透明感 */
+    div[data-testid="column"] button:hover {{
+        background-color: {COLORS['rose_mist']} !important;
+        color: {COLORS['text_primary']} !important;
+        opacity: 0.85;
+        transform: translateY(-2px);
+    }}
+    /* 選中狀態 (Active) - 暖金沙色 */
+    div[data-testid="column"] button[kind="primary"] {{
+        background-color: {COLORS['warm_gold']} !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.4) !important;
+    }}
+
+    /* --- 卡片與內容樣式 --- */
+
+    /* 簡約日式卡片 */
     .minimal-card {{
         background: {COLORS['surface']};
         border: 1px solid {COLORS['line_light']};
@@ -53,61 +86,30 @@ st.markdown(f"""
         margin-bottom: 1.2rem;
     }}
 
-    /* Streamlit Container 自定義邊框顏色 (用於住宿卡片) */
+    /* 住宿卡片容器邊框 (Streamlit container) */
     div[data-testid="stVerticalBlockBorderWrapper"] {{
         border-color: {COLORS['line_light']} !important;
         border-radius: 16px !important;
         background-color: {COLORS['surface']};
     }}
     
-    /* 按鈕樣式 */
+    /* 一般功能按鈕 (Booking Info/Ticket 等) */
     .stButton button {{
+        height: auto !important; /* 重置高度，避免影響導覽列設定 */
+        padding: 6px 20px !important;
+    }}
+    /* 針對非導覽列的按鈕進行樣式覆蓋 (透過父層選擇器較難，這裡使用通用規則微調) */
+    div[data-testid="stVerticalBlock"] > div > div > div > div > .stButton button {{
         background-color: transparent;
         border: 1px solid {COLORS['line_light']} !important;
         color: {COLORS['text_secondary']};
         border-radius: 24px;
-        padding: 6px 20px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        font-family: 'Shippori Mincho', serif;
     }}
-    /* Hover: 使用暖金沙色邊框與文字 */
-    .stButton button:hover {{
-        background-color: #FFFFFF !important;
-        color: {COLORS['warm_gold']} !important; 
-        border-color: {COLORS['warm_gold']} !important;
-        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15); /* 金色暈影 */
-        transform: translateY(-1px);
-    }}
-    /* Primary: 實心暖金沙色 */
-    .stButton button[kind="primary"] {{
+    div[data-testid="stVerticalBlock"] > div > div > div > div > .stButton button:hover {{
         background-color: #FFFFFF !important;
         color: {COLORS['warm_gold']} !important;
-        border: 1px solid {COLORS['warm_gold']} !important;
-        font-weight: 700;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }}
-
-    /* 導覽列按鈕 (色塊風格 - 新顏色應用) */
-    div[data-testid="column"] button {{
-        background-color: {COLORS['nav_bg']} !important;
-        border: none !important;
-        color: {COLORS['text_secondary']} !important;
-        font-weight: 500 !important;
-        border-radius: 12px !important;
-        height: auto !important;
-        padding: 8px 4px !important;
-    }}
-    /* Nav Hover: 霧玫瑰色背景 */
-    div[data-testid="column"] button:hover {{
-        background-color: {COLORS['rose_mist']} !important;
-        color: {COLORS['text_primary']} !important;
-    }}
-    /* Nav Active: 暖金沙色背景 */
-    div[data-testid="column"] button[kind="primary"] {{
-        background-color: {COLORS['warm_gold']} !important;
-        color: #FFFFFF !important;
-        box-shadow: 0 4px 10px rgba(222, 184, 135, 0.4) !important;
+        border-color: {COLORS['warm_gold']} !important;
+        box-shadow: 0 4px 12px rgba(222, 184, 135, 0.15);
     }}
 
     /* 天氣與匯率區塊 */
@@ -190,7 +192,7 @@ st.markdown(f"""
     .pass-notch-left {{ left: -10px; border-right: none; }}
     .pass-notch-right {{ right: -10px; border-left: none; }}
 
-    /* 時間軸 - 使用暖金沙色 */
+    /* 時間軸 */
     .timeline-point {{
         width: 9px;
         height: 9px;
@@ -370,43 +372,293 @@ def ticket_modal(ticket_key, title):
             st.session_state.is_editing = False
             st.rerun()
 
-# --- 5. 頂部導覽列 (色塊活潑化) ---
-st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
-nav_cols = st.columns([1.2, 1, 1, 1, 1, 1, 1.2])
-nav_items = [("🏠", "overview"), ("08", 0), ("09", 1), ("10", 2), ("11", 3), ("12", 4), ("🎒", "packing")]
+# --- 5. 頂部導覽列 (7等份和諧色塊) ---
+st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-# 導覽列 CSS
-st.markdown(f"""<style>
-/* 未選中狀態 */
-div[data-testid="column"] button {{
-    background-color: #F0EFEA !important; /* 淺色塊 */
-    border: none !important;
-    color: {COLORS['text_secondary']} !important;
-    font-weight: 500 !important;
-    border-radius: 12px !important;
-    height: auto !important;
-    padding: 8px 4px !important;
-}}
-/* 懸停狀態 - 霧玫瑰色 */
-div[data-testid="column"] button:hover {{
-    background-color: {COLORS['rose_mist']} !important;
-    color: {COLORS['text_primary']} !important;
-}}
-/* 選中狀態 - 暖金沙色 */
-div[data-testid="column"] button[kind="primary"] {{
-    background-color: {COLORS['warm_gold']} !important; /* 深色塊 */
-    color: #FFFFFF !important;
-    box-shadow: 0 4px 10px rgba(140, 131, 118, 0.3) !important;
-}}
-</style>""", unsafe_allow_html=True)
+# 使用 7 個等寬欄位
+nav_cols = st.columns(7)
+nav_items = [
+    ("🏠", "overview"), 
+    ("08", 0), 
+    ("09", 1), 
+    ("10", 2), 
+    ("11", 3), 
+    ("12", 4), 
+    ("🎒", "packing")
+]
 
 for i, (label, view_name) in enumerate(nav_items):
     is_active = st.session_state.view == view_name
-    if nav_cols[i].button(label, key=f"nav_{view_name}", type="primary" if is_active else "secondary", use_container_width=True):
+    # 使用 primary 樣式觸發 Active (暖金沙色)，secondary 觸發 Inactive (淺灰)
+    if nav_cols[i].button(label, key=f"nav_{i}", type="primary" if is_active else "secondary", use_container_width=True):
         st.session_state.view = view_name
         st.rerun()
 
-# --- 6. 渲染主畫面 ---
+st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+
+# --- 6. 頁面視圖 ---
+
+def view_overview():
+    # Header
+    st.markdown(f"""
+    <div style='text-align:center; padding: 30px 0 20px;'>
+        <h1 style='font-family: "Shippori Mincho", serif; font-size: 2.5rem; margin-bottom: 8px; letter-spacing: 1px; font-weight: 500;'>Hokkaido</h1>
+        <p style='color:{COLORS['text_secondary']}; letter-spacing: 0.3em; font-size: 0.8rem; font-weight: 400;'>DECEMBER 2025</p>
+        <div style="width: 60px; height: 1px; background-color: {COLORS['line_light']}; margin: 20px auto;"></div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # VJW Card
+    vjw_url = "https://vjw-lp.digital.go.jp/en/"
+    st.markdown(f"""
+    <style>
+    .vjw-card-minimal {{
+        display: flex; align-items: center; justify-content: space-between;
+        text-decoration: none !important;
+        background: {COLORS['surface']}; 
+        border: 1px solid {COLORS['line_light']};
+        border-radius: 12px; padding: 16px 24px; margin-bottom: 24px;
+        transition: all 0.2s ease;
+    }}
+    .vjw-card-minimal:hover {{ border-color: {COLORS['accent_warm']}; text-decoration: none !important; }}
+    .vjw-content-min {{ display: flex; align-items: center; color: {COLORS['text_primary']}; }}
+    .vjw-icon-min {{ font-size: 20px; margin-right: 16px; color: {COLORS['text_secondary']}; }}
+    .vjw-title-min {{ font-size: 16px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 4px; font-family: 'Shippori Mincho', serif; text-decoration: none !important; }}
+    .vjw-subtitle-min {{ font-size: 12px; opacity: 0.8; font-weight: 400; color: {COLORS['text_secondary']}; text-decoration: none !important; }}
+    .vjw-arrow-min {{ font-size: 18px; opacity: 0.6; color: {COLORS['text_secondary']}; }}
+    .vjw-card-minimal * {{ text-decoration: none !important; }}
+    </style>
+    <a href="{vjw_url}" target="_blank" class="vjw-card-minimal">
+        <div class="vjw-content-min">
+            <div class="vjw-icon-min">✈️</div>
+            <div><div class="vjw-title-min">Visit Japan Web</div><div class="vjw-subtitle-min">入境日本必須申請</div></div>
+        </div>
+        <div class="vjw-arrow-min">→</div>
+    </a>
+    """, unsafe_allow_html=True)
+
+    # Info Grid
+    rate = get_exchange_rate()
+    temp1, weather1 = get_weather(43.06, 141.35) # Sapporo
+    temp2, weather2 = get_weather(42.80, 140.68) # Niseko
+
+    st.markdown(f"""
+    <div class="info-grid-minimal">
+        <div class="info-box-minimal">
+            <div class="info-label-minimal">EXCHANGE</div>
+            <div style="display: flex; align-items: baseline;">
+                <span style="font-size: 0.9rem; color: {COLORS['text_secondary']}; margin-right: 4px;">¥1000 ≈</span>
+                <div class="info-value-minimal">{int(rate*1000) if rate else '...'}</div>
+                <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-left: 4px;">TWD</span>
+            </div>
+            <div style="font-size:0.7rem; color:{COLORS['text_secondary']}; margin-top:4px;">1 JPY = {rate:.3f}</div>
+        </div>
+        <div class="info-box-minimal">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 4px;">
+                <div class="info-label-minimal" style="margin-bottom: 0; border: none;">WEATHER</div>
+                <div class="info-label-minimal" style="margin-bottom: 0; color: {COLORS['text_secondary']}; border: none;">TODAY</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="font-family: 'Shippori Mincho', serif; font-size: 1rem;">Sapporo</div>
+                <div><span style="font-family: 'Shippori Mincho', serif; font-size: 1rem; font-weight: 500;">{temp1}°</span> <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; background: #F0EFEA; padding: 2px 6px; border-radius: 4px;">{weather1}</span></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-family: 'Shippori Mincho', serif; font-size: 1rem;">Niseko</div>
+                <div><span style="font-family: 'Shippori Mincho', serif; font-size: 1rem; font-weight: 500;">{temp2}°</span> <span style="font-size: 0.8rem; color: {COLORS['text_secondary']}; background: #F0EFEA; padding: 2px 6px; border-radius: 4px;">{weather2}</span></div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Flights Card
+    st.markdown(f'<div class="minimal-card">', unsafe_allow_html=True)
+    st.markdown(f"<h3 style='font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:8px; font-weight: 500; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 8px;'>✈️ 航班 <span style='margin-left: auto; color: {COLORS['text_secondary']}; font-size: 1.2rem;'>•••</span></h3>", unsafe_allow_html=True)
+    
+    f1, f2 = st.columns(2)
+    
+    with f1:
+        st.markdown(f"""
+        <div style='text-align: center;'>
+            <div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 08 (OUT)</div>
+            <div style='font-size: 1.4rem; font-weight: 500; font-family: "Shippori Mincho", serif; color: {COLORS['text_primary']};'>
+                {APP_DATA['flight']['outbound']['time']}
+            </div>
+            <div style='color: {COLORS['text_secondary']}; font-size: 0.8rem; margin: 2px 0;'>↓</div>
+            <div style='font-size: 1.4rem; font-weight: 500; font-family: "Shippori Mincho", serif; color: {COLORS['text_primary']};'>
+                {APP_DATA['flight']['outbound']['arrival']}
+            </div>
+            <div style='font-size: 0.9rem; color: {COLORS['text_secondary']}; margin-top:6px; font-weight:bold;'>{APP_DATA['flight']['outbound']['code']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write("")
+        if st.button("Input Ticket", key="fw_w", use_container_width=True): ticket_modal("flight_wei", "Flight (Outbound)")
+
+    with f2:
+        st.markdown(f"""
+        <div style='text-align: center; border-left: 1px solid {COLORS['line_light']};'>
+            <div style='font-size: 0.8rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;'>DEC 12 (IN)</div>
+            <div style='font-size: 1.4rem; font-weight: 500; font-family: "Shippori Mincho", serif; color: {COLORS['text_primary']};'>
+                {APP_DATA['flight']['inbound']['time']}
+            </div>
+            <div style='color: {COLORS['text_secondary']}; font-size: 0.8rem; margin: 2px 0;'>↓</div>
+            <div style='font-size: 1.4rem; font-weight: 500; font-family: "Shippori Mincho", serif; color: {COLORS['text_primary']};'>
+                {APP_DATA['flight']['inbound']['arrival']}
+            </div>
+            <div style='font-size: 0.9rem; color: {COLORS['text_secondary']}; margin-top:6px; font-weight:bold;'>{APP_DATA['flight']['inbound']['code']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write("")
+        if st.button("Input Ticket", key="fi_c", use_container_width=True): ticket_modal("flight_chien", "Flight (Inbound)")
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Emergency Card
+    st.markdown(f"""
+    <div class="minimal-card" style="border-color: {COLORS['line_light']}; background: {COLORS['surface']}; margin-top: 30px;">
+        <div style="font-size: 0.7rem; font-weight: 600; color: {COLORS['alert_red']}; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 8px;">緊急求助 / EMERGENCY</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+             <div style="text-align: center; width: 48%;">
+                 <div style="font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 500; color: {COLORS['text_primary']};">110</div>
+                 <div style="font-size: 0.7rem; color: {COLORS['text_secondary']};">報警 Police</div>
+             </div>
+             <div style="text-align: center; width: 48%; border-left: 1px solid {COLORS['line_light']};">
+                 <div style="font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 500; color: {COLORS['text_primary']};">119</div>
+                 <div style="font-size: 0.7rem; color: {COLORS['text_secondary']};">救護 Ambulance</div>
+             </div>
+        </div>
+        <div style="background: #F9F9F9; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid {COLORS['line_light']};">
+             <div style="font-size: 0.75rem; color: {COLORS['text_secondary']}; margin-bottom: 4px;">札幌辦事處 Sapporo Office</div>
+             <div style="font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 500; color: {COLORS['text_primary']};">080-1460-2568</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def view_day(day_id):
+    day = APP_DATA['days'][day_id]
+    
+    # Weather
+    lat = day['coords']['lat']
+    lon = day['coords']['lon']
+    temp, w_text = get_weather(lat, lon) 
+
+    # Header
+    weather_html = f"""
+<div style="text-align:center; margin-bottom: 2rem; padding-top: 10px;">
+<h2 style="font-family: 'Shippori Mincho', serif; font-size: 3rem; margin:0 0 4px 0; color:{COLORS['text_primary']}; letter-spacing: 1px; font-weight: 500;">{day['date'].split(' ')[0]}</h2>
+<div style="color:{COLORS['text_secondary']}; font-size:0.9rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 6px;"><span style="font-size: 1rem;">📍</span> {day['location']}</div>
+<div style="display: inline-flex; align-items: center; gap: 8px; background: {COLORS['surface']}; padding: 6px 16px; border-radius: 20px; border: 1px solid {COLORS['line_light']};">
+<span style="font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 500; color: {COLORS['text_primary']}">{temp}°</span>
+<span style="font-size: 0.9rem; color: {COLORS['text_secondary']}; border-left: 1px solid {COLORS['line_light']}; padding-left: 8px;">{w_text}</span>
+</div>
+</div>
+"""
+    st.markdown(weather_html, unsafe_allow_html=True)
+
+    # Hotel Card (整合版：名稱 + 虛線 + 按鈕)
+    with st.container(border=True):
+        st.markdown(f"""
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+                <div style="font-size:0.7rem; font-weight:600; color:{COLORS['text_secondary']}; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px;">ACCOMMODATION</div>
+                <div style="font-weight:500; font-size:1.2rem; margin-bottom:4px; font-family: 'Shippori Mincho', serif;">{day['hotel']}</div>
+                <div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{day['hotel_note']}</div>
+            </div>
+            <div style="font-size:1.8rem; color:{COLORS['line_light']};">🛏️</div>
+        </div>
+        <div style="border-top: 1px dashed {COLORS['line_light']}; margin: 16px 0 12px 0;"></div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("Booking Info / 訂單資料", key=f"hotel_btn_{day_id}", use_container_width=True):
+            ticket_modal(f"hotel_{day_id}", f"Hotel: {day['hotel']}")
+
+    st.write("")
+
+    # Timeline
+    for i, act in enumerate(day['activities']):
+        timeline_html = f"""
+<div style="position: relative; padding-left: 24px; margin-bottom: 1.5rem;">
+<div class="timeline-point" style="position: absolute; left: 0; top: 6px;"></div>
+{'<div class="timeline-line"></div>' if i < len(day['activities']) - 1 else ''}
+<div style="font-family:'Shippori Mincho', serif; font-size:0.9rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom: 8px;">{act['time']}</div>
+<div class="minimal-card" style="display:flex; justify-content:space-between; align-items:center; padding: 1.2rem;">
+<div>
+<div style="font-weight:500; font-size:1.1rem; color:{COLORS['text_primary']}; font-family: 'Shippori Mincho', serif; margin-bottom: 4px;">{act['text']}</div>
+<div style="font-size:0.85rem; color:{COLORS['text_secondary']};">{act['desc']}</div>
+</div>
+<div style="font-size:1.5rem; color:{COLORS['line_light']};">{'🍴' if act['type'] == 'food' else '🚆' if act['type'] == 'transport' else '📍'}</div>
+</div>
+</div>
+"""
+        st.markdown(timeline_html, unsafe_allow_html=True)
+        
+        with st.expander(f"查看詳情"):
+            if 'guideText' in act:
+                st.markdown(f"""
+                <div style="padding:12px; border-radius:8px; margin-bottom:12px; background: #F0EFEA;">
+                    <strong style="color:{COLORS['accent_deep']}; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; display:block; margin-bottom:4px;">💡 Note</strong>
+                    <p style="font-size:0.9rem; line-height:1.6; color:{COLORS['text_primary']}; margin:0;">{act['guideText']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            if act['type'] == 'food' and 'menu' in act:
+                # 使用霧玫瑰色 #FFE4E1 作為背景
+                st.markdown(f"""
+                <div style="padding:16px; border-radius:10px; margin-bottom:12px; background: {COLORS['rose_mist']}; border: 1px solid {COLORS['rose_mist']};">
+                    <div style="font-size:0.75rem; font-weight:600; color:{COLORS['text_primary']}; margin-bottom:8px; letter-spacing: 0.1em; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom:4px;">🍽️ RECOMMENDED MENU</div>
+                    <ul style="margin: 0; padding-left: 20px; color: {COLORS['text_primary']}; font-size: 0.95rem;">
+                        {''.join([f'<li style="margin-bottom:4px;">{m}</li>' for m in act['menu']])}
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.write("")
+
+            actions = []
+            if 'mapUrl' in act: actions.append("map")
+            if act['type'] == 'transport':
+                actions.append("ticket_w")
+                actions.append("ticket_c")
+            
+            if actions:
+                cols = st.columns(len(actions))
+                col_idx = 0
+                if "map" in actions:
+                    with cols[col_idx]: st.link_button("📍 Google Map", act['mapUrl'], use_container_width=True)
+                    col_idx += 1
+                if "ticket_w" in actions:
+                    with cols[col_idx]:
+                        if st.button("🎫 Ticket (W)", key=f"t_{day_id}_{i}_w", use_container_width=True): ticket_modal(f"t_{day_id}_{i}_w", f"Ticket (W) - {act['text']}")
+                    col_idx += 1
+                if "ticket_c" in actions:
+                    with cols[col_idx]:
+                        if st.button("🎫 Ticket (C)", key=f"t_{day_id}_{i}_c", use_container_width=True): ticket_modal(f"t_{day_id}_{i}_c", f"Ticket (C) - {act['text']}")
+
+def view_packing():
+    st.markdown(f"<h2 style='text-align:center; margin-bottom:1.5rem; font-family: \"Shippori Mincho\", serif;'>Packing List</h2>", unsafe_allow_html=True)
+    
+    total = sum(len(c['items']) for c in APP_DATA['packing'])
+    checked = sum(1 for k, v in st.session_state.packing.items() if v)
+    
+    st.markdown(f"""<style>
+        .stProgress > div > div > div > div {{ background-color: {COLORS['warm_gold']}; }}
+    </style>""", unsafe_allow_html=True)
+    st.progress(checked / total if total > 0 else 0)
+    
+    st.write("")
+    
+    for cat in APP_DATA['packing']:
+        with st.container():
+            st.markdown(f"""
+            <div style="padding: 1.2rem; background: {COLORS['surface']}; border: 1px solid {COLORS['line_light']}; border-radius: 12px; margin-bottom: 1rem;">
+                <h4 style='margin-bottom:1rem; color:{COLORS['text_primary']}; font-family: "Shippori Mincho", serif; border-bottom: 1px solid {COLORS['line_light']}; padding-bottom: 8px;'>{cat['category']}</h4>
+            """, unsafe_allow_html=True)
+            for item in cat['items']:
+                key = f"pack_{item}"
+                val = st.checkbox(item, value=st.session_state.packing.get(key, False), key=key)
+                st.session_state.packing[key] = val
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# --- 7. 渲染主畫面 ---
 if st.session_state.view == 'overview': view_overview()
 elif st.session_state.view == 'packing': view_packing()
 elif isinstance(st.session_state.view, int): view_day(st.session_state.view)
